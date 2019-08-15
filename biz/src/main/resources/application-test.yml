@@ -1,0 +1,12 @@
+spring:
+  #redis配置信息
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    maxIdle: 200
+    maxActive: 1024
+    maxWait: 1000
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/news?useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
+    username:  'root'
+    password:  '123456'
