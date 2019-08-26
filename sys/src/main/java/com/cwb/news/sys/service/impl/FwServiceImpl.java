@@ -1,24 +1,21 @@
 package com.cwb.news.sys.service.impl;
 
 import com.cwb.news.sys.base.BaseServiceImpl;
-import com.cwb.news.sys.mapper.SysJgsqlbMapper;
-import com.cwb.news.sys.mapper.SysPtfwMapper;
-import com.cwb.news.sys.mapper.SysPtjgMapper;
-import com.cwb.news.sys.model.SysFw;
-import com.cwb.news.sys.model.SysJg;
-import com.cwb.news.sys.model.SysJgsq;
-import com.cwb.news.sys.model.SysYh;
+import com.cwb.news.sys.mapper.*;
+import com.cwb.news.sys.model.*;
 import com.cwb.news.sys.service.FwService;
 import com.cwb.news.sys.service.JgService;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
+import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,8 +30,10 @@ public class FwServiceImpl extends BaseServiceImpl<SysFw, String> implements FwS
     private SysJgsqlbMapper jgsqMapper;
     @Autowired
     private SysPtfwMapper bizMapper;
-
-
+    @Autowired
+    private SysRsRoleBizMapper roleBizMapper;
+    @Autowired
+    private SysResourceMapper resourceMapper;
     @Override
     protected Mapper<SysFw> getBaseMapper() {
         return bizMapper;
@@ -47,7 +46,7 @@ public class FwServiceImpl extends BaseServiceImpl<SysFw, String> implements FwS
     	RuntimeCheck.ifBlank(entity.getApiQz(), "请输入服务api前缀");
         SysYh user = getCurrentUser();
         entity.setCjr(user.getYhid());
-        entity.setCjsj(DateUtils.getNowTime());
+        entity.setCjsj(new Date());
         entity.setFwId(genId());
         bizMapper.insert(entity);
         return ApiResponse.success();
@@ -73,10 +72,11 @@ public class FwServiceImpl extends BaseServiceImpl<SysFw, String> implements FwS
         ptjgMapper.deleteByExample(condition);
 
         // 插入新数据
+        Date now = new Date();
         for (String serviceCode : serviceCodes) {
             SysJgsq jgsq = new SysJgsq();
             jgsq.setCjr(user.getYhid());
-            jgsq.setCjsj(DateUtils.getNowTime());
+            jgsq.setCjsj(now);
             jgsq.setFwdm(serviceCode);
             jgsq.setJgdm(orgCode);
             jgsqMapper.insertSelective(jgsq);
@@ -99,32 +99,34 @@ public class FwServiceImpl extends BaseServiceImpl<SysFw, String> implements FwS
         SimpleCondition condition = new SimpleCondition(SysJgsq.class);
         condition.eq(SysJgsq.InnerColumn.jgdm,orgCode);
         List<SysJgsq> jgsqs = jgsqMapper.selectByExample(condition);
-        if (jgsqs.size() == 0)return new ArrayList<>();
+        if (jgsqs.size() == 0) {
+            return new ArrayList<>();
+        }
 
         List<String> serviceCodes = jgsqs.stream().map(SysJgsq::getJgdm).collect(Collectors.toList());
         return findIn(SysFw.InnerColumn.fwdm,serviceCodes);
     }
 
 
-//    @Override
-//    public ApiResponse<String> removeIdsWithCheck(String[] ids) {
-//        List<String> idList = Arrays.asList(ids);
-//        Example resExample = new Example(SysResource.class);
-//        resExample.and().andEqualTo(SysResource.InnerColumn.resLevel.name(),1);
-//        resExample.and().andIn(SysResource.InnerColumn.resPid.name(),idList);
-//        int count = resourceMapper.selectCountByExample(resExample);
-//        RuntimeCheck.ifTrue(count != 0,"该服务下有关联资源，不能删除");
-//
-//        Example bizExample = new Example(SysBiz.class);
-//        bizExample.and().andIn(SysBiz.InnerColumn.bizId.name(),idList);
-//        bizMapper.deleteByExample(bizExample);
-//
-//        // 删除角色服务关联
-//        Example roleBizExample = new Example(SysRsRoleBiz.class);
-//        roleBizExample.and().andIn(SysRsRoleBiz.InnerColumn.bizId.name(),idList);
-//        roleBizMapper.deleteByExample(roleBizExample);
-//        return ApiResponse.success();
-//    }
+    @Override
+    public ApiResponse<String> removeIdsWithCheck(String[] ids) {
+        List<String> idList = Arrays.asList(ids);
+        Example resExample = new Example(SysResource.class);
+        resExample.and().andEqualTo(SysResource.InnerColumn.resLevel.name(),1);
+        resExample.and().andIn(SysResource.InnerColumn.resPid.name(),idList);
+        int count = resourceMapper.selectCountByExample(resExample);
+        RuntimeCheck.ifTrue(count != 0,"该服务下有关联资源，不能删除");
+
+        Example bizExample = new Example(SysBiz.class);
+        bizExample.and().andIn(SysBiz.InnerColumn.bizId.name(),idList);
+        bizMapper.deleteByExample(bizExample);
+
+        // 删除角色服务关联
+        Example roleBizExample = new Example(SysRsRoleBiz.class);
+        roleBizExample.and().andIn(SysRsRoleBiz.InnerColumn.bizId.name(),idList);
+        roleBizMapper.deleteByExample(roleBizExample);
+        return ApiResponse.success();
+    }
 
 	@Override
 	public ApiResponse<String> updateEntity(SysFw entity) {  
@@ -132,7 +134,7 @@ public class FwServiceImpl extends BaseServiceImpl<SysFw, String> implements FwS
     	RuntimeCheck.ifBlank(entity.getFwmc(), "请输入服务名称");
     	RuntimeCheck.ifBlank(entity.getApiQz(), "请输入服务api前缀");
 		entity.setXgr(getOperateUser());
-		entity.setXgsj(DateUtils.getNowTime());
+		entity.setXgsj(new Date());
 		update(entity);
 		return ApiResponse.updateSuccess();
 	}

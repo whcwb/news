@@ -4,7 +4,6 @@ import com.cwb.news.sys.base.BaseService;
 import com.cwb.news.sys.mapper.SysPtrzMapper;
 import com.cwb.news.sys.model.SysRz;
 import com.cwb.news.sys.model.SysYh;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.commonUtil.JsonUtil;
 import com.cwb.news.util.commonUtil.SnowflakeIdWorker;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -22,6 +21,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,7 +53,7 @@ public class SysOperateLogAop {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             SysYh userInfo = (SysYh)request.getAttribute("userInfo");
             log.setFf(joinPoint.getTarget().getClass().getSimpleName() +"." + joinPoint.getSignature().getName());
-            log.setCzsj(DateUtils.getNowTime());
+            log.setCzsj(new Date());
             log.setCzr(userInfo.getYhid()+"-"+userInfo.getXm());
             log.setZxsj(elapseTime);
             log.setCs(getArgsAsString(joinPoint));

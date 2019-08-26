@@ -29,7 +29,7 @@ public class BaseWebConfigure extends WebMvcConfigurerAdapter {
 	 * 扩展配置Spring消息转换器
 	 */
 	@Override
-	public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {		
+	public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
 		super.configureMessageConverters(converters);
 		StringHttpMessageConverter string = new StringHttpMessageConverter(Charset.forName("UTF-8"));
 		List<MediaType> stringSupportedMediaTypes = new ArrayList<MediaType>();

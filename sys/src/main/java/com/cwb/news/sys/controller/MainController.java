@@ -1,16 +1,16 @@
 package com.cwb.news.sys.controller;
 
 import com.cwb.news.sys.bean.AccessToken;
+import com.cwb.news.sys.bean.Menu;
 import com.cwb.news.sys.bean.UserPassCredential;
 import com.cwb.news.sys.bean.userInfoModel;
-import com.cwb.news.sys.mapper.SysYhGnMapper;
 import com.cwb.news.sys.model.SysJg;
 import com.cwb.news.sys.model.SysYh;
-import com.cwb.news.sys.model.SysYhGn;
-import com.cwb.news.sys.service.GnService;
-import com.cwb.news.sys.service.JgService;
-import com.cwb.news.sys.service.YhService;
+import com.cwb.news.sys.model.SysZdlm;
+import com.cwb.news.sys.model.SysZdxm;
+import com.cwb.news.sys.service.*;
 import com.cwb.news.util.bean.ApiResponse;
+import com.cwb.news.util.bean.SimpleCondition;
 import com.cwb.news.util.commonUtil.Des;
 import com.cwb.news.util.commonUtil.FileUtil;
 import com.cwb.news.util.commonUtil.JwtUtil;
@@ -18,6 +18,7 @@ import com.cwb.news.util.exception.RuntimeCheck;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +26,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import tk.mybatis.mapper.entity.Example;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 处理用户登陆、登出、查询字典信息等相关访问接口
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeUnit;
  * @date 2017年8月12日
  */
 @RestController
+@Slf4j
 public class MainController {
 
 	@Value("${staticPath:/}")
@@ -48,11 +50,13 @@ public class MainController {
 	@Autowired
 	private YhService userService;
 	@Autowired
-	private GnService gnService;
-	@Autowired
 	private JgService jgService;
 	@Autowired
-	private SysYhGnMapper yhGnMapper;
+	private GnService gnService;
+	@Autowired
+	private ZdlmService zdlmService;
+	@Autowired
+	private ZdxmService zdxmService;
     @Autowired
     private DefaultKaptcha defaultKaptcha;
     @Autowired
@@ -60,27 +64,16 @@ public class MainController {
  // 忽略当接收json字符串中没有bean结构中的字段时抛出异常问题
  	private ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
+
+
 	/**
 	 * 用户登陆接口
 	 * @param userCred
 	 * @return
 	 */
-//	@RequestMapping(value="/login", method={RequestMethod.POST})
 	@RequestMapping(value="/login")
-	public ApiResponse<Map<String,Object>> login(UserPassCredential userCred, HttpServletRequest request){
-//		RuntimeCheck.ifBlank(userCred.getCodeID(),"验证码不正确！");
-		RuntimeCheck.ifTrue((
-				StringUtils.isEmpty(userCred.getUsername()) ||
-				StringUtils.isEmpty(userCred.getPassword())),
-//				StringUtils.isEmpty(userCred.getCaptcha())),
-				"请提交登陆用户信息！");
-//		String code = (String)request.getSession().getAttribute(userCred.getCodeID());
-//		RuntimeCheck.ifTrue(!userCred.getCaptcha().equals(code),"验证码不正确！");
-		return commonLogin(userCred);
-	}
-
-
-	private ApiResponse<Map<String,Object>> commonLogin(UserPassCredential userCred){
+	public ApiResponse<Map<String,Object>> login(UserPassCredential userCred){
+		RuntimeCheck.ifTrue((StringUtils.isEmpty(userCred.getUsername()) || StringUtils.isEmpty(userCred.getPassword())),"请提交登陆用户信息！");
 		//加密密码
 		try {
 			userCred.setPassword(Des.encrypt(userCred.getPassword()));
@@ -88,77 +81,85 @@ public class MainController {
 			throw new RuntimeException("密码加密异常",e1);
 		}
 
-		Example condition = new Example(SysYh.class);
-		condition.and()
-				.andEqualTo(SysYh.InnerColumn.zh.name(), userCred.getUsername())
-				.andEqualTo(SysYh.InnerColumn.mm.name(), userCred.getPassword());
+		SimpleCondition condition = new SimpleCondition(SysYh.class);
+		condition.eq(SysYh.InnerColumn.zh.name(), userCred.getUsername());
+		condition.eq(SysYh.InnerColumn.mm.name(), userCred.getPassword());
 		List<SysYh> existUser = this.userService.findByCondition(condition);
-		Map<String,Object> rMap = new HashMap<>(2);
+		RuntimeCheck.ifTrue(existUser == null || existUser.size() == 0,"用户名或密码不正确！");
+
+		SysYh user = existUser.get(0);
+		RuntimeCheck.ifTrue(!"01".equals(user.getZt()),"用户已禁用！");
+		return commonLogin(user);
+	}
+
+
+	private ApiResponse<Map<String,Object>> commonLogin(SysYh user){
 		ApiResponse<Map<String,Object>> result = new ApiResponse<>();
-		if (existUser != null && existUser.size() > 0){
-			SysYh item = existUser.get(0);
-			RuntimeCheck.ifTrue(!"01".equals(item.getZt()),"用户已禁用！");
 
-			try {
-				String token = JwtUtil.createToken(item.getYhid(),item.getZh());
-				redisDao.boundValueOps(item.getYhid()+"-token").set(token, 1, TimeUnit.DAYS);
-				redisDao.boundValueOps(item.getYhid()+"-userInfo").set(mapper.writeValueAsString(item), 1, TimeUnit.DAYS);
-				AccessToken aToken = new AccessToken();
-				aToken.setUserId(item.getYhid());
-				aToken.setUsername(item.getZh());
-				aToken.setToken(token);
-				userInfoModel userInfomodel = new userInfoModel();
-				userInfomodel.setXm(item.getXm());
-				userInfomodel.setYhid(item.getYhid());
-				userInfomodel.setJgdm(item.getJgdm());
-				userInfomodel.setType(item.getLx());
-				rMap.put("accessToken", aToken);
-				rMap.put("userInfo", userInfomodel);
-				SysJg org = jgService.findByOrgCode(item.getJgdm());
-				if (org != null){
-					rMap.put("jgmc", org.getJgmc());
-				}
-				result.setResult(rMap);
+		try {
+			String token = JwtUtil.createToken(user.getYhid(), System.currentTimeMillis() + "");
+			redisDao.boundValueOps(user.getYhid()).set(token, 1, TimeUnit.DAYS);
+			redisDao.boundValueOps(user.getYhid()+"-userInfo").set(mapper.writeValueAsString(user), 1, TimeUnit.DAYS);
+			AccessToken aToken = new AccessToken();
+			aToken.setUserId(user.getYhid());
+			aToken.setUsername(user.getZh());
+			aToken.setToken(token);
+			userInfoModel userInfomodel = new userInfoModel();
+			userInfomodel.setXm(user.getXm());
+			userInfomodel.setYhid(user.getYhid());
+			userInfomodel.setJgdm(user.getJgdm());
+			userInfomodel.setType(user.getLx());
 
-				initPermission(item);
-			} catch (Exception e) {
-				result.setCode(ApiResponse.FAILED);
-				result.setMessage("用户登陆失败，请重试！");
+			Map<String,Object> rMap = new HashMap<>();
+			rMap.put("accessToken", aToken);
+			rMap.put("userInfo", userInfomodel);
+			SysJg org = jgService.findByOrgCode(user.getJgdm());
+			if (org != null){
+				rMap.put("jgmc", org.getJgmc());
 			}
-		}else{
+
+			// 获取用户菜单树
+			List<Menu> menuTree = gnService.getMenuTree(user);
+			if (menuTree.size() == 0){
+				result.setCode(ApiResponse.FAILED);
+				result.setMessage("您的账号暂未分配权限，请联系机构管理员");
+				return result;
+			}
+			rMap.put("menuTree",menuTree);
+
+			// 获取字典项
+			List<SysZdlm> zdlmList = zdlmService.findAll();
+			getZdxm(zdlmList);
+			rMap.put("dictList",zdlmList);
+			result.setResult(rMap);
+		} catch (Exception e) {
 			result.setCode(ApiResponse.FAILED);
-			result.setMessage("用户名或密码不正确！");
+			result.setMessage("用户登陆失败，请重试！");
 			return result;
 		}
 		return result;
 	}
 
-	private void initPermission(SysYh user){
-		List<SysYhGn> userFunctions = gnService.getYhGnList(user.getYhid());
-		if (userFunctions.size() == 0)return;
 
-		Set<String> functionCodes = new HashSet<>();
-		for (SysYhGn userFunction : userFunctions) {
-			String apiQz = userFunction.getApiQz();
-			if (!apiQz.contains(",")){
-				functionCodes.add(apiQz);
-				continue;
+	private void getZdxm(List<SysZdlm> list){
+		List<String> lmdms = list.stream().map(SysZdlm::getLmdm).collect(Collectors.toList());
+		List<SysZdxm> zdxms = zdxmService.findByZdlms(lmdms);
+		Map<String,SysZdlm> zdlmMap = list.stream().collect(Collectors.toMap(SysZdlm::getLmdm,p->p));
+		for (SysZdxm zdxm : zdxms) {
+			SysZdlm zdlm = zdlmMap.get(zdxm.getZdlmdm());
+			if (zdlm == null) {
+                continue;
+            }
+			if (zdlm.getZdxmList() == null){
+				List<SysZdxm> zdxmList = new ArrayList<>();
+				zdxmList.add(zdxm);
+				zdlm.setZdxmList(zdxmList);
+			}else{
+				zdlm.getZdxmList().add(zdxm);
 			}
-			String[] qzs = apiQz.split(",");
-			for (String qz : qzs) {
-				if (StringUtils.isEmpty(qz))continue;
-				functionCodes.add(qz);
-			}
 		}
-		StringBuilder sb = new StringBuilder();
-		for (String functionCode : functionCodes) {
-			sb.append(functionCode).append(",");
-		}
-		if(sb.length()>0){
-			sb.deleteCharAt(sb.length() - 1);
-		}
-		redisDao.boundValueOps(user.getYhid()+"-apiPrefix").set(sb.toString(), 1, TimeUnit.DAYS);
 	}
+
 	/**
 	 * 用户退出接口
 	 * @param request
@@ -168,8 +169,9 @@ public class MainController {
 	public ApiResponse<AccessToken> logout(HttpServletRequest request){
 		ApiResponse<AccessToken> result = new ApiResponse<>();
 		String userId = request.getHeader("userid");
-		redisDao.delete(userId+"-token");
+		redisDao.delete(userId);
 		redisDao.delete(userId+"-userInfo");
+
 		return result;
 	}
 
@@ -192,7 +194,8 @@ public class MainController {
         try {
         	//生产验证码字符串并保存到session中
             String createText = defaultKaptcha.createText();
-			httpServletRequest.getSession().setAttribute(id, createText);
+			/*httpServletRequest.getSession().setAttribute(id, createText);*/
+			redisDao.boundValueOps(id).set(createText,10,TimeUnit.MINUTES);
             //使用生产的验证码字符串返回一个BufferedImage对象并转为byte写入到byte数组中
             BufferedImage challenge = defaultKaptcha.createImage(createText);
             ImageIO.write(challenge, "jpg", httpServletResponse.getOutputStream());
@@ -202,18 +205,24 @@ public class MainController {
         }
     }
 
-	//处理文件上传
+	/**
+	 * 处理文件上传
+	 */
 	@RequestMapping(value="/upload", method = RequestMethod.POST)
 	@ResponseBody
 	public ApiResponse<String> uploadImg(@RequestParam("file") MultipartFile file, String targetPath) {
-    	if (StringUtils.isEmpty(targetPath)) targetPath = "temp";
+    	if (StringUtils.isEmpty(targetPath)) {
+			targetPath = "temp";
+		}
 		targetPath = targetPath + "/";
+
 		String fileName = file.getOriginalFilename();
 		String suffix = fileName.substring(fileName.lastIndexOf("."));
 		UUID uuid = UUID.randomUUID();
 		fileName = uuid.toString().replaceAll("-","") + suffix;
 		String filePath = staticPath + targetPath;
 		String path = targetPath + fileName;
+
 		try {
 			FileUtil.uploadFile(file.getBytes(), filePath, fileName);
 		} catch (Exception e) {
@@ -225,4 +234,10 @@ public class MainController {
 	public ApiResponse<String> forbidden(){
 		return ApiResponse.forbidden();
 	}
+	@RequestMapping(value = "/authFiled",method = {RequestMethod.GET,RequestMethod.POST})
+	public ApiResponse<String> authFiled(){
+		return ApiResponse.authFailed();
+	}
+
+
 }

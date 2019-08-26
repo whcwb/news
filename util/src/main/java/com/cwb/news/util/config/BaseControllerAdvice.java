@@ -1,6 +1,7 @@
 package com.cwb.news.util.config;
 
 import com.cwb.news.util.bean.ApiResponse;
+import com.cwb.news.util.exception.AuthFailedException;
 import com.cwb.news.util.exception.RuntimeCheckException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,10 +39,18 @@ public class BaseControllerAdvice {
 
 	@ExceptionHandler(RuntimeCheckException.class)
 	@ResponseBody
-	public ApiResponse<String> serverExceptionHandler(HttpServletRequest request,Exception e) throws JsonProcessingException {
+	public ApiResponse<String> serverExceptionHandler(HttpServletRequest request, Exception e) throws JsonProcessingException {
 		ObjectMapper mapper = new ObjectMapper();
 		log.error("请求参数异常，来源路径["+request.getRequestURI()+"]，请求数据["+ mapper.writeValueAsString(request.getParameterMap())+"]", e);
 		return ApiResponse.fail(e.getMessage());
+	}
+
+	@ExceptionHandler(AuthFailedException.class)
+	@ResponseBody
+	public ApiResponse<String> authFailedExceptionHandler(HttpServletRequest request, Exception e) throws JsonProcessingException {
+		ObjectMapper mapper = new ObjectMapper();
+		log.error("授权认证失败，来源路径["+request.getRequestURI()+"]，请求数据["+ mapper.writeValueAsString(request.getParameterMap())+"]", e);
+		return ApiResponse.authFailed();
 	}
 
 	/**
@@ -53,14 +62,15 @@ public class BaseControllerAdvice {
 	 * @throws Exception
 	 */
 	@ExceptionHandler(Exception.class)
-    public @ResponseBody ApiResponse handleUncaughtException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws Exception {
+    public @ResponseBody
+    ApiResponse handleUncaughtException(Exception ex, HttpServletRequest request, HttpServletResponse response) throws Exception {
 		String context = request.getRequestURI();
 		ObjectMapper mapper = new ObjectMapper();
 		log.error("请求发生异常，来源路径["+context+"]，请求数据["+mapper.writeValueAsString(request.getParameterMap())+"]", ex);
 
 		ApiResponse api = new ApiResponse();
 		api.setCode(ApiResponse.FAILED);
-		api.setMessage("数据处理异常！");
+		api.setMessage("数据处理异常");
 		return api;
     }
 }

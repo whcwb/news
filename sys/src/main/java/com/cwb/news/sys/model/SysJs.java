@@ -5,71 +5,41 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.Date;
 
-@Table(name = "sys_clk_ptjs")
+@Table(name = "SYS_CLK_PTJS")
 public class SysJs implements Serializable {
-    /**
-     * 角色id
-     */
     @Id
     @Column(name = "JS_ID")
     private String jsId;
 
-    /**
-     * 角色名称
-     */
     @Column(name = "JSMC")
     private String jsmc;
 
-    /**
-     * 角色类型
-     */
     @Column(name = "JSLX")
     private String jslx;
 
-    /**
-     * 创建时间
-     */
     @Column(name = "CJSJ")
-    private String cjsj;
+    private Date cjsj;
 
-    /**
-     * 创建人
-     */
     @Column(name = "CJR")
     private String cjr;
 
-    /**
-     * 修改人
-     */
     @Column(name = "XGR")
     private String xgr;
 
-    /**
-     * 修改时间
-     */
     @Column(name = "XGSJ")
-    private String xgsj;
+    private Date xgsj;
 
-    /**
-     * 状态
-     */
     @Column(name = "ZT")
     private String zt;
 
-    /**
-     * 机构代码
-     */
     @Column(name = "JGDM")
     private String jgdm;
 
-    /**
-     * 说明
-     */
     @Column(name = "SM")
     private String sm;
 
-    private static final long serialVersionUID = 1L;
     @Transient
     private boolean _checked;
 
@@ -81,185 +51,149 @@ public class SysJs implements Serializable {
     public void set_checked(boolean _checked) {
         this._checked = _checked;
     }
+
+    private static final long serialVersionUID = 1L;
+
     /**
-     * 获取角色id
-     *
-     * @return JS_ID - 角色id
+     * @return JS_ID
      */
     public String getJsId() {
         return jsId;
     }
 
     /**
-     * 设置角色id
-     *
-     * @param jsId 角色id
+     * @param jsId
      */
     public void setJsId(String jsId) {
         this.jsId = jsId;
     }
 
     /**
-     * 获取角色名称
-     *
-     * @return JSMC - 角色名称
+     * @return JSMC
      */
     public String getJsmc() {
         return jsmc;
     }
 
     /**
-     * 设置角色名称
-     *
-     * @param jsmc 角色名称
+     * @param jsmc
      */
     public void setJsmc(String jsmc) {
         this.jsmc = jsmc;
     }
 
     /**
-     * 获取角色类型
-     *
-     * @return JSLX - 角色类型
+     * @return JSLX
      */
     public String getJslx() {
         return jslx;
     }
 
     /**
-     * 设置角色类型
-     *
-     * @param jslx 角色类型
+     * @param jslx
      */
     public void setJslx(String jslx) {
         this.jslx = jslx;
     }
 
     /**
-     * 获取创建时间
-     *
-     * @return CJSJ - 创建时间
+     * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
-     * 设置创建时间
-     *
-     * @param cjsj 创建时间
+     * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
     /**
-     * 获取创建人
-     *
-     * @return CJR - 创建人
+     * @return CJR
      */
     public String getCjr() {
         return cjr;
     }
 
     /**
-     * 设置创建人
-     *
-     * @param cjr 创建人
+     * @param cjr
      */
     public void setCjr(String cjr) {
         this.cjr = cjr;
     }
 
     /**
-     * 获取修改人
-     *
-     * @return XGR - 修改人
+     * @return XGR
      */
     public String getXgr() {
         return xgr;
     }
 
     /**
-     * 设置修改人
-     *
-     * @param xgr 修改人
+     * @param xgr
      */
     public void setXgr(String xgr) {
         this.xgr = xgr;
     }
 
     /**
-     * 获取修改时间
-     *
-     * @return XGSJ - 修改时间
+     * @return XGSJ
      */
-    public String getXgsj() {
+    public Date getXgsj() {
         return xgsj;
     }
 
     /**
-     * 设置修改时间
-     *
-     * @param xgsj 修改时间
+     * @param xgsj
      */
-    public void setXgsj(String xgsj) {
+    public void setXgsj(Date xgsj) {
         this.xgsj = xgsj;
     }
 
     /**
-     * 获取状态
-     *
-     * @return ZT - 状态
+     * @return ZT
      */
     public String getZt() {
         return zt;
     }
 
     /**
-     * 设置状态
-     *
-     * @param zt 状态
+     * @param zt
      */
     public void setZt(String zt) {
         this.zt = zt;
     }
 
     /**
-     * 获取机构代码
-     *
-     * @return JGDM - 机构代码
+     * @return JGDM
      */
     public String getJgdm() {
         return jgdm;
     }
 
     /**
-     * 设置机构代码
-     *
-     * @param jgdm 机构代码
+     * @param jgdm
      */
     public void setJgdm(String jgdm) {
         this.jgdm = jgdm;
     }
 
     /**
-     * 获取说明
-     *
-     * @return SM - 说明
+     * @return SM
      */
     public String getSm() {
         return sm;
     }
 
     /**
-     * 设置说明
-     *
-     * @param sm 说明
+     * @param sm
      */
     public void setSm(String sm) {
         this.sm = sm;
     }
+
 
     public enum InnerColumn {
         jsId("JS_ID"),

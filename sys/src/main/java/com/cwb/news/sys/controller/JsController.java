@@ -5,12 +5,15 @@ import com.cwb.news.sys.base.BaseService;
 import com.cwb.news.sys.model.SysJs;
 import com.cwb.news.sys.service.JsService;
 import com.cwb.news.util.bean.ApiResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,8 +48,13 @@ public class JsController extends BaseController<SysJs, String> {
      */
     @RequestMapping(value = "modifyUserRoles",method = RequestMethod.POST)
     public ApiResponse<String> modifyUserRoles(@RequestParam(name="userId" ) String userId,
-                                               @RequestParam(name="roleIds") List<String> roleIds){
-        return roleService.modifyUserRoles(userId,roleIds);
+                                               @RequestParam(name="roleIds",required = false) String roleIds){
+        if(StringUtils.isNotBlank(roleIds)){
+            return roleService.modifyUserRoles(userId, Arrays.asList(roleIds.split(",")));
+        }else{
+            return roleService.modifyUserRoles(userId,new ArrayList<>());
+        }
+
     }
 
     /**

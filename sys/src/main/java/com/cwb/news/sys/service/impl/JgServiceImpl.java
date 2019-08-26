@@ -10,16 +10,13 @@ import com.cwb.news.sys.service.JgService;
 import com.cwb.news.sys.util.OrgUtil;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -96,7 +93,7 @@ public class JgServiceImpl extends BaseServiceImpl<SysJg, String> implements JgS
 		RuntimeCheck.ifNull(orgType, "机构类型不存在");
 
 		entity.setCjr(getOperateUser());
-		entity.setCjsj(DateUtils.getNowTime());
+		entity.setCjsj(new Date());
 		entity.setZt(Dict.CommonStatus.VALID.getCode());
 		String orgCode = genOrgCode(entity);
 		entity.setJgdm(orgCode);
@@ -108,7 +105,9 @@ public class JgServiceImpl extends BaseServiceImpl<SysJg, String> implements JgS
 			entity.setJgdj(fatherLevel + 1);
 		}
 		ptjgMapper.insertSelective(entity);
-		return ApiResponse.success();
+		ApiResponse<String> res = new ApiResponse<>();
+		res.setResult(orgCode);
+		return res;
 	}
 
 	private String genOrgCode(SysJg org) {
@@ -143,56 +142,107 @@ public class JgServiceImpl extends BaseServiceImpl<SysJg, String> implements JgS
 	 * @return
 	 */
 	@Override
-	public List<SysJg> findAllSubOrg(String orgCode,String jgmc) {
+	public List<SysJg> findAllSubOrg(List<String> orgCode,String jgmc) {
 		SimpleCondition condition = new SimpleCondition(SysJg.class);
-		condition.startWith(SysJg.InnerColumn.jgdm,orgCode);
+		String sql = "";
+		for (String s : orgCode) {
+			if(org.apache.commons.lang3.StringUtils.isNotEmpty(sql)) {
+				sql += " or jgdm like '" + s + "%'";
+			}else{
+				sql += " jgdm like '" + s + "%'";
+			}
+		}
+		condition.and().andCondition( sql );
 		if (StringUtils.isNotEmpty(jgmc)){
 			condition.like(SysJg.InnerColumn.jgmc,jgmc);
 		}
-		return ptjgMapper.selectByExample(condition);
+		condition.setOrderByClause(" px asc , jgdm asc");
+		List<SysJg> sysJgs = ptjgMapper.selectByExample(condition);
+		sysJgs.forEach(sysJg -> {
+			if(StringUtils.isNotBlank(sysJg.getFjgdm())) {
+				SysJg byOrgCode = findByOrgCode(sysJg.getFjgdm());
+				sysJg.setFjgmc(byOrgCode.getJgmc());
+			}
+		});
+		return sysJgs;
 	}
 
 	@Override
 	public ApiResponse<List<SysJg>> getOrgTree(String jgmc) {
 		ApiResponse<List<SysJg>> response = new ApiResponse<>();
 		SysYh user = getCurrentUser();
-		List<SysJg> orgs = jgService.findAllSubOrg(user.getJgdm(),jgmc);
+		String jgdms = user.getJgdms();
+		List<String> list = new ArrayList<>();
+		list.add(user.getJgdm());
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(jgdms)){
+			list.addAll( Arrays.asList(jgdms.split(",")));
+		}
+		List<SysJg> orgs = jgService.findAllSubOrg(list,jgmc);
 		List<SysJg> orgTree = jgService.getOrgTree(orgs);
 		response.setResult(orgTree);
 		return response;
 	}
 
+	/**
+	 * 根据机构代码获取当前机构的所有父机构
+	 * @param orgCode
+	 * @return
+	 */
+	@Override
+	public ApiResponse<List<SysJg>> getOrgPath(String orgCode) {
+		SysJg function = findById(orgCode);
+		RuntimeCheck.ifNull(function,"未找到记录");
+		List<SysJg> list = new ArrayList<>();
+		list.add(function);
+		findParent(function,list);
+		list.sort(Comparator.comparingInt(SysJg::getJgdj));
+		return ApiResponse.success(list);
+	}
+
+    @Override
+    public List<SysJg> findSubOrg(String jgdm) {
+        SimpleCondition condition = new SimpleCondition(SysJg.class);
+        condition.eq(SysJg.InnerColumn.fjgdm, jgdm);
+        condition.setOrderByClause(" px asc ");
+		List<SysJg> byCondition = findByCondition(condition);
+		return byCondition;
+    }
+
+
+    private void findParent(SysJg function,List<SysJg> result){
+		if (function == null){
+			return;
+		}
+		if (StringUtils.isEmpty(function.getFjgdm())){
+			return;
+		}
+		SysJg father = findById(function.getFjgdm());
+		if (father == null){
+			return;
+		}
+		result.add(father);
+		findParent(father,result);
+	}
+
 	@Override
 	public ApiResponse<List<TreeNode>> getTree() {
 		SysYh user = getCurrentUser();
-		List<SysJg> orgs = jgService.findAllSubOrg(user.getJgdm(),null);
+		String jgdms = user.getJgdms();
+		List<String> list = new ArrayList<>();
+		list.add(user.getJgdm());
+		if(org.apache.commons.lang3.StringUtils.isNotBlank(jgdms)){
+			list.addAll( Arrays.asList(jgdms.split(",")));
+		}
+		List<SysJg> orgs = jgService.findAllSubOrg(list,null);
 		List<TreeNode> treeNodes = convertToTreeNodeList(orgs);
-		treeNodes = buildTree(treeNodes);
+		treeNodes = TreeNode.buildTree(treeNodes);
 		return ApiResponse.success(treeNodes);
 	}
 
-	private List<TreeNode> buildTree(List<TreeNode> list){
-		Map<String,TreeNode> nodeMap = list.stream().collect(Collectors.toMap(TreeNode::getValue,p->p));
-		List<TreeNode> root = new ArrayList<>();
-		for (TreeNode node : list) {
-			if (StringUtils.isEmpty(node.getFather())){
-				root.add(node);
-				continue;
-			}
-			TreeNode father = nodeMap.get(node.getFather());
-			if (father == null)continue;
-			if (father.getChildren() == null){
-				List<TreeNode> children = new ArrayList<>();
-				children.add(node);
-				father.setChildren(children);
-			}else{
-				father.getChildren().add(node);
-			}
-		}
-		return root;
-	}
 
-	private List<TreeNode> convertToTreeNodeList(List<SysJg> orgList){
+
+	@Override
+	public List<TreeNode> convertToTreeNodeList(List<SysJg> orgList){
 		List<TreeNode> treeNodes = new ArrayList<>(orgList.size());
 		for (SysJg jg : orgList) {
 			treeNodes.add(convertToTreeNode(jg));
@@ -204,6 +254,9 @@ public class JgServiceImpl extends BaseServiceImpl<SysJg, String> implements JgS
 		node.setLabel(org.getJgmc());
 		node.setValue(org.getJgdm());
 		node.setFather(org.getFjgdm());
+		node.setLx(org.getLx());
 		return node;
 	}
+
+
 }

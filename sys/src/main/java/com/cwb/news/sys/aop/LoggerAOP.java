@@ -4,14 +4,15 @@ import com.cwb.news.sys.mapper.SysPtrzMapper;
 import com.cwb.news.sys.model.SysRz;
 import com.cwb.news.sys.model.SysYh;
 import com.cwb.news.sys.util.ContextUtil;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.commonUtil.JsonUtil;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,8 +23,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
 
-//@Component
-//@Aspect
+@Component
+@Aspect
 public class LoggerAOP {
     private static final Logger log = LoggerFactory.getLogger(LoggerAOP.class);
 
@@ -41,7 +42,6 @@ public class LoggerAOP {
         } catch (Throwable e) {
             log.error("方法执行异常",e);
         }finally {
-
             try{
                 long endTime = System.currentTimeMillis();
                 HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
@@ -62,7 +62,7 @@ public class LoggerAOP {
                 logger.setSm(log.title());
                 logger.setCzlx(log.type().getCode());
 //                logger.setIp(reqIP);
-                logger.setCzsj(DateUtils.getNowTime());
+                logger.setCzsj(new Date());
                 if (LogType.LOGIN.getCode().equals(log.type().getCode())){
                     // 登录操作，由于返回值较长，result只记录username
                 }else if (LogType.LOGOUT.getCode().equals(log.type().getCode())){
@@ -92,7 +92,9 @@ public class LoggerAOP {
             for (Field field : fieldList) {
                 Class cls = field.getType();
                 // 去掉不必要参数（HttpServletResponse等）
-                if (cls.equals(HttpServletResponse.class))continue;
+                if (cls.equals(HttpServletResponse.class)) {
+                    continue;
+                }
                 field.setAccessible(true);
                 Object val = field.get(result);
                 paramMap.put(field.getName(),val);

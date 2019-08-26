@@ -4,20 +4,19 @@ import com.cwb.news.sys.base.BaseServiceImpl;
 import com.cwb.news.sys.base.LimitedCondition;
 import com.cwb.news.sys.constant.Dict;
 import com.cwb.news.sys.mapper.SysClkPtyhMapper;
+import com.cwb.news.sys.mapper.SysJsGnMapper;
 import com.cwb.news.sys.mapper.SysYhJsMapper;
-import com.cwb.news.sys.model.SysFw;
-import com.cwb.news.sys.model.SysJg;
-import com.cwb.news.sys.model.SysYh;
-import com.cwb.news.sys.model.SysYhJs;
+import com.cwb.news.sys.model.*;
+import com.cwb.news.sys.service.GnService;
 import com.cwb.news.sys.service.JgService;
 import com.cwb.news.sys.service.JsService;
 import com.cwb.news.sys.service.YhService;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.commonUtil.Des;
 import com.cwb.news.util.commonUtil.EncryptUtil;
 import com.cwb.news.util.exception.RuntimeCheck;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,9 +28,9 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import tk.mybatis.mapper.common.Mapper;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhService {
@@ -40,13 +39,14 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 	private String resePwd;
 	@Autowired
 	private SysClkPtyhMapper baseMapper;
-
-//	@Autowired
-//	private SysPtfwMapper bizMapper;
 	@Autowired
-	private JsService roleService;
+	private GnService gnService;
 	@Autowired
 	private JgService jgService;
+	@Autowired
+	private JsService jsService;
+	@Autowired
+	private SysJsGnMapper jsGnMapper;
 	@Autowired
 	private SysYhJsMapper yhJsMapper;
 
@@ -54,23 +54,10 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 	protected Class<SysYh> getEntityCls(){
 		return SysYh.class;
 	}
-	
+
 	@Override
 	protected Mapper<SysYh> getBaseMapper() {
 		return baseMapper;
-	}
-
-	@Override
-	public List<SysYh> getByRoleIds(List<String> roleIds) {
-		SimpleCondition condition = new SimpleCondition(SysYhJs.class);
-		condition.in(SysYhJs.InnerColumn.jsId,roleIds);
-		List<SysYhJs> userRoles = yhJsMapper.selectByExample(condition);
-		if (userRoles.size() == 0){
-			return new ArrayList<>();
-		}
-		List<String> userIds = userRoles.stream().map(SysYhJs::getYhId).collect(Collectors.toList());
-		List<SysYh> userList = findIn(SysYh.InnerColumn.yhid,userIds);
-		return userList;
 	}
 
 	/**
@@ -80,25 +67,95 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 	 * @return 执行结果
 	 */
 	@Override
-	public ApiResponse<String> addUser(SysYh user) {
+	public ApiResponse<String> validAndSave(SysYh user) {
 		RuntimeCheck.ifBlank(user.getZh(),"账号不能为空");
 		RuntimeCheck.ifBlank(user.getXm(),"姓名不能为空");
-		RuntimeCheck.ifBlank(user.getJgdm(),"请选择机构");
 		RuntimeCheck.ifBlank(user.getSjh(),"手机号不能为空");
 		RuntimeCheck.ifFalse(StringUtils.isAlphanumeric(user.getZh()),"登陆名只能是数字和字母组成！");
 		boolean exists = ifExists(SysYh.InnerColumn.zh.name(),user.getZh());
 		RuntimeCheck.ifTrue(exists,"登陆名已存在，请更换别的登陆名！");
-		SysJg org = jgService.findByOrgCode(user.getJgdm());
-		RuntimeCheck.ifNull(org,"机构不存在");
+//		SysJg org = jgService.findByOrgCode(user.getJgdm());
+//		RuntimeCheck.ifNull(org,"机构不存在");
 
 		SysYh currentUser = getCurrentUser();
 		user.setYhid(String.valueOf(idGenerator.nextId()));
 		user.setMm(EncryptUtil.encryptUserPwd(user.getMm()));
 		user.setCjr(currentUser.getYhid());
-		user.setCjsj(DateUtils.getNowTime());
+		user.setCjsj(new Date());
 		user.setZt(Dict.UserStatus.VALID.getCode());
+		user.setRoleId("ur"+user.getYhid());
+		if (StringUtils.isEmpty(user.getJgdm())){
+			user.setJgdm(currentUser.getJgdm());
+		}
 		baseMapper.insertSelective(user);
-		return ApiResponse.success();
+
+
+//		initUserRole();
+		List<SysJs> sysJs = jsService.findEq(SysJs.InnerColumn.jsId, "ur" + user.getYhid());
+
+		if(CollectionUtils.isEmpty(sysJs)){
+			SysJs role = new SysJs();
+			role.setJsId("ur"+user.getYhid());
+			role.setCjsj(new Date());
+			role.setJgdm(user.getJgdm());
+			role.setJsmc(user.getXm()+"-角色");
+			role.setJslx("40");
+			jsService.save(role);
+
+			SysYhJs yhJs = new SysYhJs();
+			yhJs.setJsId(role.getJsId());
+			yhJs.setYhId(user.getYhid());
+			yhJs.setYhjsId(genId());
+			yhJsMapper.insertSelective(yhJs);
+		}
+
+//		initUserRole();
+		// 如果用户类型为管理员，则默认拥有系统管理权限
+//		if ("00".equals(user.getLx())){
+//			addAdminPermission(user);
+//		}
+		ApiResponse<String> r = new ApiResponse<>();
+		r.setResult(user.getYhid());
+		return r;
+	}
+
+	private void addAdminPermission(SysYh user){
+		// 添加机构管理员角色
+		Date now = new Date();
+		SysJs adminRole = new SysJs();
+		SysYh currentUser = getCurrentUser();
+		SysJg jg = jgService.findByOrgCode(currentUser.getJgdm());
+		adminRole.setCjr(currentUser.getZh());
+		adminRole.setJgdm(user.getJgdm());
+		adminRole.setCjsj(now);
+		adminRole.setJsId(genId());
+		adminRole.setJslx("00");
+		adminRole.setJsmc(jg.getJgmc()+"-机构管理员");
+		adminRole.setZt("00");
+		jsService.saveEntity(adminRole);
+
+		SysYhJs yhJs = new SysYhJs();
+		yhJs.setCjr(currentUser.getZh());
+		yhJs.setCjsj(now);
+		yhJs.setJsId(adminRole.getJsId());
+		yhJs.setYhId(user.getYhid());
+		yhJs.setYhjsId(genId());
+		yhJsMapper.insertSelective(yhJs);
+
+		List<String> permissionList = Arrays.asList("system-user","system-role","system-framework");
+		List<SysGn> functinos = gnService.findIn(SysGn.InnerColumn.gndm,permissionList);
+		for (SysGn functino : functinos) {
+			SysJsGn jsGn = new SysJsGn();
+			jsGn.setCjr(currentUser.getZh());
+			jsGn.setCjsj(now);
+			jsGn.setFwdm("1");
+			jsGn.setGndm(functino.getGndm());
+			jsGn.setFgndm(functino.getFjd());
+			jsGn.setJsdm(adminRole.getJsId());
+			jsGn.setId(genId());
+			jsGnMapper.insertSelective(jsGn);
+		}
+		gnService.cachePermission(Arrays.asList(adminRole.getJsId()));
 	}
 
 	@Override
@@ -116,7 +173,7 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 		entity.setMm(EncryptUtil.encryptUserPwd(entity.getMm()));
 		entity.setZt(Dict.UserStatus.VALID.getCode());
 		entity.setSjh(entity.getSjh().trim());
-		entity.setCjsj(DateUtils.getNowTime());
+		entity.setCjsj(new Date());
 		if (StringUtils.isEmpty(entity.getJgdm())){
 			SysYh user = getCurrentUser();
 			entity.setJgdm(user.getJgdm());
@@ -154,58 +211,16 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 	}
 
 
-	@Override
-	public ApiResponse<List<SysFw>> getUserPermissions(SysYh user) {
-		ApiResponse<List<SysFw>> result = new ApiResponse<>();
-		// 获取角色
-		List<String> roleIds = roleService.getUserRoleIds(user.getYhid());
-
-//		Example roleBizExample = new Example(SysRsRoleBiz.class);
-//		roleBizExample.and().andIn(SysRsRoleBiz.InnerColumn.roleId.name(),roleIds);
-//		List<SysRsRoleBiz> roleBizs = roleBizMapper.selectByExample(roleBizExample);
-//		if (roleBizs.size() == 0) return result;
-
-		// 获取bizs
-//		Set<Long> bizIds = roleBizs.stream().map(SysRsRoleBiz::getBizId).collect(Collectors.toSet());
-//		Example bizExample = new Example(SysFw.class);
-//		bizExample.and().andIn(SysFw.InnerColumn.fwId.name(),bizIds);
-//		List<SysFw> bizs = bizMapper.selectByExample(bizExample);
-//		result.setResult(bizs);
-//		Map<String,SysFw> bizMap = bizs.stream().collect(Collectors.toMap(SysFw::getFwId, p->p));
-
-		// 获取resources
-//		Example roleResourceExample = new Example(SysRsRoleResource.class);
-//		roleResourceExample.and().andIn(SysRsRoleResource.InnerColumn.roleId.name(),roleIds);
-//		List<SysRsRoleResource> roleResources = roleResourceMapper.selectByExample(roleResourceExample);
-//		if (roleResources.size() != 0){
-//			Set<Long> resourceIds = roleResources.stream().map(SysRsRoleResource::getResId).collect(Collectors.toSet());
-//			Example resourceExample = new Example(SysResource.class);
-//			resourceExample.and().andIn(SysResource.InnerColumn.resId.name(),resourceIds);
-//			List<SysResource> resources = resourceMapper.selectByExample(resourceExample);
-//			for (SysResource resource : resources) {
-//				SysFw biz = bizMap.get(resource.getResPid());
-//				if (biz == null) continue;
-//				if (biz.getResourceList() == null){
-//					List<SysResource> resourcesList = new ArrayList<>();
-//					resourcesList.add(resource);
-//					biz.setResourceList(resourcesList);
-//				}else{
-//					biz.getResourceList().add(resource);
-//				}
-//			}
-//		}
-		return result;
-	}
 
 	@Override
 	public ApiResponse<String> updateEntity(SysYh user) {
 		RuntimeCheck.ifBlank(user.getZh(),"账号不能为空");
 		RuntimeCheck.ifBlank(user.getXm(),"姓名不能为空");
-//		RuntimeCheck.ifBlank(user.getJgdm(),"请选择机构");
+		RuntimeCheck.ifBlank(user.getJgdm(),"请选择机构");
 		RuntimeCheck.ifBlank(user.getSjh(),"手机号不能为空");
 		RuntimeCheck.ifFalse(StringUtils.isAlphanumeric(user.getZh()),"登陆名只能是数字和字母组成！");
-//		SysJg org = jgService.findByOrgCode(user.getJgdm());
-//		RuntimeCheck.ifNull(org,"机构不存在");
+		SysJg org = jgService.findByOrgCode(user.getJgdm());
+		RuntimeCheck.ifNull(org,"机构不存在");
 
 		LimitedCondition condition= new LimitedCondition(SysYh.class);
 		condition.eq(SysYh.InnerColumn.zh, user.getZh());
@@ -251,4 +266,113 @@ public class YhServiceImpl extends BaseServiceImpl<SysYh, String> implements YhS
 		baseMapper.updateByPrimaryKeySelective(user);
 		return ApiResponse.success();
 	}
+
+	@Override
+	public SysYh queryByPhone(String phone) {
+		SimpleCondition condition = new SimpleCondition(SysYh.class);
+		condition.eq(SysYh.InnerColumn.sjh, phone);
+		condition.setOrderByClause(SysYh.InnerColumn.yhid.desc());
+		List<SysYh> list = this.findByCondition(condition);
+		if(list!=null&&list.size()>0){
+			return list.get(0);
+		}else{
+			return null;
+		}
+	}
+
+	@Override
+	public ApiResponse<String> bindUKey(SysYh updateUser) {
+		ApiResponse<String> result = new ApiResponse<>();
+		if (StringUtils.isEmpty(updateUser.getUkey())){
+			return ApiResponse.fail("请先插入UKey！");
+		}
+		if (StringUtils.isEmpty(updateUser.getUkeyPwd())){
+			return ApiResponse.fail("UKey密码无效，请重新操作！");
+		}
+		List<SysYh> exists = findEq(SysYh.InnerColumn.ukey,updateUser.getUkey());
+		if (exists.size() != 0){
+			return ApiResponse.fail("UKey已颁发，不能再次颁发！");
+		}
+		//为登陆用户颁发UKey
+		SysYh existUser = this.findById(updateUser.getYhid());
+		if (StringUtils.isEmpty(existUser.getUkey())){
+			existUser.setUkey(updateUser.getUkey());
+			existUser.setUkeyPwd(updateUser.getUkeyPwd());
+			result.setMessage("UKey颁发成功！");
+			baseMapper.updateByPrimaryKeySelective(existUser);
+		}else{
+			return ApiResponse.fail("用户已经颁发过UKey，不能重复颁发！");
+		}
+		return result;
+	}
+
+	@Override
+	public ApiResponse<String> unBindUKey(SysYh user) {
+		if (StringUtils.isEmpty(user.getUkey())){
+			return ApiResponse.fail("请先插入UKey！");
+		}
+		SimpleCondition condition = new SimpleCondition(SysYh.class);
+		condition.eq(SysYh.InnerColumn.yhid,user.getYhid());
+		condition.eq(SysYh.InnerColumn.ukey,user.getUkey());
+		List<SysYh> exists = findByCondition(condition);
+		if (exists.size() == 0){
+			return ApiResponse.fail("UKey不匹配，解绑失败");
+		}
+		SysYh exist = exists.get(0);
+		exist.setUkey(null);
+		exist.setUkeyPwd(null);
+		baseMapper.updateByPrimaryKey(exist);
+		return ApiResponse.success();
+	}
+
+	@Override
+	public ApiResponse<String> updateLoginType(SysYh user) {
+		RuntimeCheck.ifBlank(user.getYhid(),"请选择用户");
+		RuntimeCheck.ifBlank(user.getLoginType(),"请选择登录方式");
+		SysYh exist = baseMapper.selectByPrimaryKey(user.getYhid());
+		RuntimeCheck.ifNull(exist,"用户不存在");
+		exist.setLoginType(user.getLoginType());
+		baseMapper.updateByPrimaryKeySelective(exist);
+		return ApiResponse.success();
+	}
+
+    @Override
+    public ApiResponse<String> initUserRole() {
+		log.debug("initUserRole");
+		SimpleCondition condition = new SimpleCondition(SysYh.class);
+		condition.and().andIsNull(SysYh.InnerColumn.roleId.name());
+		List<SysYh> userList = baseMapper.selectByExample(condition);
+		log.debug("userList.size:"+userList.size());
+		if (userList.size() == 0)return ApiResponse.success();
+		Date now = new Date();
+
+		for (SysYh sysYh : userList) {
+
+			List<SysJs> sysJs = jsService.findEq(SysJs.InnerColumn.jsId, "ur" + sysYh.getYhid());
+
+		if(CollectionUtils.isEmpty(sysJs)){
+			SysJs role = new SysJs();
+			role.setJsId("ur"+sysYh.getYhid());
+			role.setCjsj(now);
+			role.setJgdm(sysYh.getJgdm());
+			role.setJsmc(sysYh.getXm()+"-角色");
+			role.setJslx("40");
+			jsService.save(role);
+
+			SysYhJs yhJs = new SysYhJs();
+			yhJs.setJsId(role.getJsId());
+			yhJs.setYhId(sysYh.getYhid());
+			yhJs.setYhjsId(genId());
+			yhJsMapper.insertSelective(yhJs);
+
+			sysYh.setRoleId(role.getJsId());
+			baseMapper.updateByPrimaryKeySelective(sysYh);
+		}
+
+
+		}
+        return ApiResponse.success();
+    }
+
+
 }

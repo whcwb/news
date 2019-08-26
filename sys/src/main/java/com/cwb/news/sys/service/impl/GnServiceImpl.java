@@ -3,21 +3,30 @@ package com.cwb.news.sys.service.impl;
 import com.cwb.news.sys.base.BaseServiceImpl;
 import com.cwb.news.sys.base.LimitedCondition;
 import com.cwb.news.sys.bean.Menu;
-import com.cwb.news.sys.mapper.*;
+import com.cwb.news.sys.mapper.SysFwgnMapper;
+import com.cwb.news.sys.mapper.SysJgsqlbMapper;
+import com.cwb.news.sys.mapper.SysJsGnMapper;
+import com.cwb.news.sys.mapper.SysYhJsMapper;
 import com.cwb.news.sys.model.*;
-import com.cwb.news.sys.service.*;
+import com.cwb.news.sys.model.SysJsGn.InnerColumn;
+import com.cwb.news.sys.service.FwService;
+import com.cwb.news.sys.service.GnService;
+import com.cwb.news.sys.service.JgService;
+import com.cwb.news.sys.service.JsService;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Slf4j
 @Service
@@ -34,19 +43,13 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     @Autowired
     private GnService gnService;
     @Autowired
-    private SysPtjgMapper ptjgMapper;
-    @Autowired
     private SysJgsqlbMapper jgsqMapper;
     @Autowired
     private SysFwgnMapper gnMapper;
     @Autowired
-    private SysJgsqlbMapper jgsqlbMapper;
+    private StringRedisTemplate redisTemplateUtil;
     @Autowired
     private FwService fwService;
-    @Autowired
-    private YhService yhService;
-    @Autowired
-    private SysYhGnMapper yhGnMapper;
     @Override
     protected Mapper<SysGn> getBaseMapper() {
         return gnMapper;
@@ -59,8 +62,9 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     		return ApiResponse.fail("功能代码已存在");
     	}
     	String creator = getOperateUser();
+    	Date now = new Date();
         entity.setCjr(creator);
-        entity.setCjsj(DateUtils.getNowTime());
+        entity.setCjsj(now);
         gnMapper.insert(entity);
 
         SysJgsq jgsq = new SysJgsq();
@@ -68,47 +72,11 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         jgsq.setId(genId());
         jgsq.setJgdm("100");
         jgsq.setGndm(entity.getGndm());
-        jgsq.setCjsj(DateUtils.getNowTime());
+        jgsq.setCjsj(now);
         jgsq.setCjr(getOperateUser());
-        jgsqlbMapper.insertSelective(jgsq);
+        jgsqMapper.insert(jgsq);
+        initPermission();
         return ApiResponse.success();
-    }
-
-    @Override
-    public List<SysYhGn> getYhGnList(String yhId) {
-        SimpleCondition condition = new SimpleCondition(SysYhGn.class);
-        condition.eq(SysYhGn.InnerColumn.yhid,yhId);
-        List<SysYhGn> userFunctions = yhGnMapper.selectByExample(condition);
-        if (userFunctions.size() == 0){
-            updateUserFunctins(yhId);
-        }
-        return userFunctions;
-    }
-
-    @Override
-    public void updateUserFunctins(String yhdId) {
-        RuntimeCheck.ifBlank(yhdId,"请选择用户");
-        SysYh user = yhService.findById(yhdId);
-        RuntimeCheck.ifNull(user,"用户不存在");
-        updateUserFunctins(user);
-    }
-
-    @Override
-    public void updateUserFunctins(SysYh user) {
-        RuntimeCheck.ifNull(user,"用户不存在");
-        List<SysGn> functions = getUserFunctions(user);
-
-        SimpleCondition condition = new SimpleCondition(SysYhGn.class);
-        condition.eq(SysYhGn.InnerColumn.yhid,user.getYhid());
-        yhGnMapper.deleteByExample(condition);
-
-        for (SysGn function : functions) {
-            SysYhGn yhGn = new SysYhGn();
-            yhGn.setYhid(user.getYhid());
-            yhGn.setGndm(function.getGndm());
-            yhGn.setApiQz(function.getApiQz());
-            yhGnMapper.insertSelective(yhGn);
-        }
     }
 
     @Override
@@ -121,7 +89,7 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     @Override
     public ApiResponse<String> updateEntity(SysGn gn) {
     	gn.setXgr(getOperateUser());
-    	gn.setXgsj(DateUtils.getNowTime());
+    	gn.setXgsj(new Date());
     	SysGn gndm = gnMapper.selectByPrimaryKey(gn.getGndm());
     	if (StringUtils.isEmpty(gn.getFjd())){
     	    gn.setFjd(null);
@@ -131,7 +99,64 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
 		}else {
 			update(gn);
 		}
+
+        // 更新角色权限缓存
+        // 获取具有该权限的角色
+        List<String> ids = jsGnMapper.findJsIdsByGndm(gn.getGndm());
+        initPermission();
         return ApiResponse.success();
+    }
+
+
+    /**
+     * 更新缓存中用户的权限
+     * @param ids
+     */
+    @Override
+    public void cachePermission(List<String> ids) {
+        SysJsGn jsGn = new SysJsGn();
+        ids.forEach(s -> {
+            jsGn.setJsdm(s);
+            List<SysJsGn> jsGns = jsGnMapper.select(jsGn);
+            if(CollectionUtils.isNotEmpty(jsGns)) {
+            // 根据功能代码查询所有的api前缀
+            List<String> gndms = jsGns.stream().map(SysJsGn::getGndm).collect(Collectors.toList());
+
+                List<SysGn> gns = gnService.findIn(SysGn.InnerColumn.gndm, gndms);
+                List<String> apiQzs = gns.stream().map(SysGn::getApiQz).distinct().collect(Collectors.toList());
+                StringBuilder sb = new StringBuilder();
+                // 拼接api 前缀
+                apiQzs.stream().forEach(s1 -> {
+                    sb.append(s1).append(",");
+                });
+                //   存储 角色功能 api
+                redisTemplateUtil.boundValueOps("permission_" + s).set(sb.toString());
+            }
+        });
+    }
+
+    @Override
+    public List<SysGn> buildFunctionTree(List<SysGn> nodeList) {
+        List<SysGn> root = new ArrayList<>();
+        Map<String,SysGn> nodeMap = nodeList.stream().collect(Collectors.toMap(SysGn::getGndm, p->p));
+
+        for (SysGn node : nodeList) {
+            String fatherCode = node.getFjd();
+            if (StringUtils.isEmpty(fatherCode)){
+                root.add(node);
+                continue;
+            }
+            SysGn father = nodeMap.get(fatherCode);
+            if (father == null)continue;
+            if (father.getChildren() == null){
+                List<SysGn> children = new ArrayList<>();
+                children.add(node);
+                father.setChildren(children);
+            }else{
+                father.getChildren().add(node);
+            }
+        }
+        return root;
     }
 
     @Override
@@ -141,35 +166,37 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         RuntimeCheck.ifTrue(roles.size() == 0,"未找到记录");
 
         SimpleCondition condition = new SimpleCondition(SysJsGn.class);
-        condition.eq(SysJsGn.InnerColumn.jsdm,jsdm);
+        condition.eq(InnerColumn.jsdm,jsdm);
         jsGnMapper.deleteByExample(condition);
 
-        if (gndms == null || gndms.size() == 0)return ApiResponse.success();
+        if (gndms == null || gndms.size() == 0) {
+            return ApiResponse.success();
+        }
         List<SysGn> functionList = findIn(SysGn.InnerColumn.gndm,gndms);
 
         String createUser = getOperateUser();
-
+        Date now = new Date();
         List<SysJsGn> jsGns = new ArrayList<>();
         for (SysGn function : functionList) {
             SysJsGn jsGn = new SysJsGn();
             jsGn.setGndm(function.getGndm());
             jsGn.setJsdm(jsdm);
             jsGn.setCjr(createUser);
-            jsGn.setCjsj(DateUtils.getNowTime());
+            jsGn.setCjsj(now);
             jsGn.setFwdm(function.getFwdm());
             jsGn.setFgndm(function.getFjd());
             jsGn.setId(genId());
             jsGns.add(jsGn);
         }
         jsGnMapper.insertList(jsGns);
+        cachePermission(Arrays.asList(jsdm));
         return ApiResponse.success();
     }
 
     @Override
     public ApiResponse<List<SysGn>> getRoleFunctions(String jsdm) {
         SimpleCondition condition = new SimpleCondition(SysJsGn.class);
-        condition.eq(SysJsGn.InnerColumn.jsdm,jsdm);
-        condition.eq(SysJsGn.InnerColumn.zt,"00");
+        condition.eq(InnerColumn.jsdm,jsdm);
         List<SysJsGn> roleFunctions = jsGnMapper.selectByExample(condition);
         if (roleFunctions.size() == 0){
             List<SysGn> gnList = new ArrayList<>();
@@ -180,7 +207,7 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         return ApiResponse.success(functions);
     }
 
-    private List<Menu> convertToMenus(List<SysGn> functions){
+    private List<com.cwb.news.sys.bean.Menu> convertToMenus(List<SysGn> functions){
         List<Menu> menuList = new ArrayList<>();
         for (SysGn function : functions) {
             Menu menu = new Menu(function);
@@ -193,36 +220,14 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     @Override
     public List<Menu> getMenuTree(SysYh user) {
         List<SysGn> functions = getUserFunctions(user);
-        if (functions == null || functions.size() == 0)return new ArrayList<>();
+        if (functions == null || functions.size() == 0) {
+            return new ArrayList<>();
+        }
         Set<String> functionCodes = functions.stream().map(SysGn::getGndm).collect(Collectors.toSet());
         findParent(functions,functionCodes);
         functions.sort(Comparator.comparing(SysGn::getPx));
         List<Menu> menuList = convertToMenus(functions);
         return buildMenuTree(menuList);
-    }
-
-
-    private void findParent(List<SysGn> functions,Set<String> functionCodes){
-        Set<String> addCodes = new HashSet<>();
-        Set<String> fatherCodes = new HashSet<>();
-        for (SysGn function : functions) {
-            if (StringUtils.isEmpty(function.getFjd()))continue;
-            if (functionCodes.contains(function.getFjd()))continue;
-            fatherCodes.add(function.getFjd());
-            addCodes.add(function.getFjd());
-        }
-        if (fatherCodes.size() != 0){
-            List<SysGn> fathers = findIn(SysGn.InnerColumn.gndm,fatherCodes);
-            for (SysGn father : fathers) {
-                if (StringUtils.isEmpty(father.getFjd()))continue;
-                if (functionCodes.contains(father.getFjd()))continue;
-                addCodes.add(father.getFjd());
-            }
-        }
-        if (addCodes.size() != 0){
-            List<SysGn> addFunctions = findIn(SysGn.InnerColumn.gndm,addCodes);
-            functions.addAll(addFunctions);
-        }
     }
 
     @Override
@@ -246,21 +251,51 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         if ("100".equals(jgdm))return ApiResponse.success();
         SimpleCondition condition = new SimpleCondition(SysJgsq.class);
         condition.eq(SysJgsq.InnerColumn.jgdm,jgdm);
-        jgsqlbMapper.deleteByExample(condition);
+        jgsqMapper.deleteByExample(condition);
 
         String creator = getOperateUser();
-
+        Date now = new Date();
         for (String s : gndmList) {
             SysJgsq jgsq = new SysJgsq();
             jgsq.setCjr(creator);
-            jgsq.setCjsj(DateUtils.getNowTime());
+            jgsq.setCjsj(now);
             jgsq.setGndm(s);
             jgsq.setJgdm(jgdm);
             jgsq.setId(genId());
             // todo 服务代码
 //            jgsq.setFwdm();
-            jgsqlbMapper.insertSelective(jgsq);
+            jgsqMapper.insertSelective(jgsq);
         }
+        return ApiResponse.success();
+    }
+
+    /**
+     * 加载所有角色权限
+     */
+    @Override
+    public void initPermission() {
+
+        // 获取所有角色的 id ， 查询对应角色的 功能
+        List<SysJs> sysJsList = jsService.findAll();
+        List<String> jsIds = sysJsList.stream().map(SysJs::getJsId).collect(Collectors.toList());
+        cachePermission(jsIds);
+
+    }
+
+    @Override
+    public ApiResponse<String> removeByIds(String[] ids) {
+
+        for (String id : ids) {
+            gnMapper.deleteByPrimaryKey(id);
+            SimpleCondition condition = new SimpleCondition(SysJsGn.class);
+            condition.eq(InnerColumn.gndm,id);
+            jsGnMapper.deleteByExample(condition);
+            SimpleCondition simpleCondition = new SimpleCondition(SysJgsq.class);
+
+            simpleCondition.eq(SysJgsq.InnerColumn.gndm,id);
+            jgsqMapper.deleteByExample(simpleCondition);
+        }
+
         return ApiResponse.success();
     }
 
@@ -277,13 +312,13 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     private List<SysGn> convertToFunctionList(List<Menu> menus){
         List<SysGn> list = new ArrayList<>();
         String creartor = "初始导入";
-
-        for (Menu menu : menus) {
+        Date now = new Date();
+        for (com.cwb.news.sys.bean.Menu menu : menus) {
             SysGn function = new SysGn();
             function.setFwdm("1");
             function.setZt("00");
             function.setCjr(creartor);
-            function.setCjsj(DateUtils.getNowTime());
+            function.setCjsj(now);
             function.setFjd(menu.getPid());
             function.setGndm(menu.getName());
             function.setUrl(menu.getName());
@@ -341,7 +376,9 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         SysJg org = jgService.findByOrgCode(orgCode);
         RuntimeCheck.ifNull(org,"机构不存在");
 
-        if ("100".equals(orgCode))return ApiResponse.success();
+        if ("100".equals(orgCode)) {
+            return ApiResponse.success();
+        }
 
         // 删除旧数据
         SimpleCondition condition = new SimpleCondition(SysJg.class);
@@ -350,11 +387,11 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
 
         // 插入新数据
         List<SysGn> functions = findIn(SysGn.InnerColumn.gndm,functionCode);
-
+        Date now = new Date();
         for (SysGn function : functions) {
             SysJgsq jgsq = new SysJgsq();
             jgsq.setCjr(user.getYhid());
-            jgsq.setCjsj(DateUtils.getNowTime());
+            jgsq.setCjsj(now);
             jgsq.setFwdm(function.getFwdm());
             jgsq.setGndm(function.getGndm());
             jgsq.setJgdm(orgCode);
@@ -377,13 +414,13 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     @Override
     public List<SysGn> getUserFunctions(SysYh user) {
         if ("su".equals(user.getLx())){
-            SimpleCondition condition = new SimpleCondition(SysGn.class);
-            condition.eq(SysGn.InnerColumn.zt,"00");
-            return findByCondition(condition);
+            return findAll();
         }
         List<String> functionCodes = getUserFunctionCodes(user);
-        List<String> orgFunctionCodes = getOrgFunctionCodes(user.getJgdm());
-        functionCodes.retainAll(orgFunctionCodes);
+        if (!"00".equals(user.getLx())){
+            List<String> orgFunctionCodes = getOrgFunctionCodes(user.getJgdm());
+            functionCodes.retainAll(orgFunctionCodes);
+        }
         if (functionCodes.size() == 0)return new ArrayList<>();
         SimpleCondition condition = new SimpleCondition(SysGn.class);
         condition.in(SysGn.InnerColumn.gndm,functionCodes);
@@ -394,21 +431,37 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
     @Override
     public List<SysGn> getOrgFunctions(String orgCode) {
         List<String> functionCodes = getOrgFunctionCodes(orgCode);
-        return gnService.findIn(SysGn.InnerColumn.gndm,functionCodes);
+        if(CollectionUtils.isNotEmpty(functionCodes)) {
+            List<SysGn> in = gnService.findIn(SysGn.InnerColumn.gndm, functionCodes);
+            return in;
+        }else {
+            return new ArrayList<>();
+        }
+
     }
     @Override
     public List<String> getOrgFunctionCodes(String orgCode) {
+        String hideSystem = getRequestParamterAsString("hideSystem");
         SimpleCondition condition = new SimpleCondition(SysJgsq.class);
         condition.eq(SysJgsq.InnerColumn.jgdm,orgCode);
         List<SysJgsq> jgsqs = jgsqMapper.selectByExample(condition);
-        if (jgsqs.size() == 0)return new ArrayList<>();
-        List<String> functionCodes = jgsqs.stream().map(SysJgsq::getGndm).collect(Collectors.toList());
+        if (jgsqs.size() == 0) {
+            return new ArrayList<>();
+        }
+        List<String> functionCodes;
+        if (StringUtils.isNotEmpty(hideSystem)){
+            functionCodes = jgsqs.stream().filter(jgsq -> !StringUtils.startsWith(jgsq.getGndm(),"system")).map(SysJgsq::getGndm).collect(Collectors.toList());
+        }else{
+            functionCodes  = jgsqs.stream().map(SysJgsq::getGndm).collect(Collectors.toList());
+        }
+
+
         return functionCodes;
     }
 
     private void initjgsq(){
         List<SysGn> functions = findAll();
-
+        Date now = new Date();
         String creator = getOperateUser();
         for (SysGn function : functions) {
             SysJgsq jgsq = new SysJgsq();
@@ -416,9 +469,9 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
             jgsq.setGndm(function.getGndm());
             jgsq.setId(genId());
             jgsq.setJgdm("100");
-            jgsq.setCjsj(DateUtils.getNowTime());
+            jgsq.setCjsj(now);
             jgsq.setCjr(creator);
-            jgsqlbMapper.insertSelective(jgsq);
+            jgsqMapper.insertSelective(jgsq);
         }
     }
 
@@ -428,7 +481,9 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         SimpleCondition condition = new SimpleCondition(SysYhJs.class);
         condition.eq(SysYhJs.InnerColumn.yhId,user.getYhid());
         List<SysYhJs> yhJs = yhJsMapper.selectByExample(condition);
-        if (yhJs.size() == 0)  return new ArrayList<>();
+        if (yhJs.size() == 0) {
+            return new ArrayList<>();
+        }
 
         // 获取角色功能
         List<String> jsdms = yhJs.stream().map(SysYhJs::getJsId).collect(Collectors.toList());
@@ -437,9 +492,13 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
 
     @Override
     public List<SysGn> getRolesFunctions(List<String> jsdms) {
-        if (jsdms == null || jsdms.size() == 0)return new ArrayList<>();
+        if (jsdms == null || jsdms.size() == 0) {
+            return new ArrayList<>();
+        }
         List<String> functionCodes = getRolesFunctionCodes(jsdms);
-        if (functionCodes.size() == 0)return new ArrayList<>();
+        if (functionCodes.size() == 0) {
+            return new ArrayList<>();
+        }
 
 //        SysYh user = getCurrentUser();
 //        List<String> orgFunctionCodes = getOrgFunctionCodes(user.getJgdm());
@@ -449,17 +508,21 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
 
     @Override
     public List<String> getRolesFunctionCodes(List<String> jsdms) {
-        if (jsdms == null || jsdms.size() == 0)return new ArrayList<>();
+        if (jsdms == null || jsdms.size() == 0) {
+            return new ArrayList<>();
+        }
         SysJs role = jsService.findById(jsdms.get(0));
-        if (role == null)return new ArrayList<>();
+        if (role == null) {
+            return new ArrayList<>();
+        }
         SimpleCondition condition = new SimpleCondition(SysJsGn.class);
-        condition.in(SysJsGn.InnerColumn.jsdm,jsdms);
+        condition.in(InnerColumn.jsdm,jsdms);
         List<SysJsGn> roleFunctions = jsGnMapper.selectByExample(condition);
         if (roleFunctions.size() == 0)return new ArrayList<>();
         return roleFunctions.stream().map(SysJsGn::getGndm).collect(Collectors.toList());
     }
 
-    private List<SysFw> getAllPermissionTreeWithChecked(List<SysFw> services, List<SysGn> functions){
+    private List<SysFw> getAllPermissionTreeWithChecked(List<SysFw> services,List<SysGn> functions){
         SysYh user = getCurrentUser();
         List<SysGn> allFunctions = getOrgFunctions(user.getJgdm());
         List<SysFw> allServices = fwService.findAll();
@@ -517,6 +580,8 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         return getPermissionTree(services,functions,null);
     }
     private List<SysFw> getPermissionTree(List<SysFw> services,List<SysGn> functions,List<String> hasFunctionCodes){
+        Set<String> functionCodes = functions.stream().map(SysGn::getGndm).collect(Collectors.toSet());
+        findParent(functions,functionCodes);
         Map<String,SysFw> serviceMap = services.stream().collect(Collectors.toMap(SysFw::getFwdm,p->p));
         Map<String,SysGn> functionMap = functions.stream().collect(Collectors.toMap(SysGn::getGndm, p->p));
 
@@ -565,6 +630,29 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         return services;
     }
 
+    private void findParent(List<SysGn> functions,Set<String> functionCodes){
+        Set<String> addCodes = new HashSet<>();
+        Set<String> fatherCodes = new HashSet<>();
+        for (SysGn function : functions) {
+            if (StringUtils.isEmpty(function.getFjd()))continue;
+            if (functionCodes.contains(function.getFjd()))continue;
+            fatherCodes.add(function.getFjd());
+            addCodes.add(function.getFjd());
+        }
+        if (fatherCodes.size() != 0){
+            List<SysGn> fathers = findIn(SysGn.InnerColumn.gndm,fatherCodes);
+            for (SysGn father : fathers) {
+                if (StringUtils.isEmpty(father.getFjd()))continue;
+                if (functionCodes.contains(father.getFjd()))continue;
+                addCodes.add(father.getFjd());
+            }
+        }
+        if (addCodes.size() != 0){
+            List<SysGn> addFunctions = findIn(SysGn.InnerColumn.gndm,addCodes);
+            functions.addAll(addFunctions);
+        }
+    }
+
     @Override
     public List<SysFw> getAllPermissionTree() {
         // todo  机构分权
@@ -576,7 +664,7 @@ public class GnServiceImpl extends BaseServiceImpl<SysGn, String> implements GnS
         List<String> hasFunctionCodes = getOrgFunctionCodes(jgdm);
         SysJg org = jgService.findByOrgCode(jgdm);
         if (org == null)return new ArrayList<>();
-        return getPermissionTree(fwService.findByJgdm(jgdm),getOrgFunctions(org.getFjgdm()),hasFunctionCodes);
+        return getPermissionTree(fwService.findAll(),getOrgFunctions(org.getFjgdm()),hasFunctionCodes);
     }
 
     @Override

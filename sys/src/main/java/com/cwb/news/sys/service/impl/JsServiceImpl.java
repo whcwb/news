@@ -12,14 +12,15 @@ import com.cwb.news.sys.model.SysYhJs;
 import com.cwb.news.sys.service.GnService;
 import com.cwb.news.sys.service.JsService;
 import com.cwb.news.util.bean.ApiResponse;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
 import tk.mybatis.mapper.entity.Example;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,11 +32,11 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 	@Autowired
 	private SysClkPtyhMapper userMapper;
 	@Autowired
-	private GnService gnService;
-	@Autowired
 	private SysYhJsMapper userRoleMapper;
 	@Autowired
 	private SysJsGnMapper roleResourceMapper;
+	@Autowired
+	private GnService gnService;
 
 	@Override
 	protected Mapper<SysJs> getBaseMapper() {
@@ -52,7 +53,7 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 		}
 		SysYh user = getCurrentUser();
 		entity.setJgdm(user.getJgdm());
-		entity.setCjsj(DateUtils.getNowTime());
+		entity.setCjsj(new Date());
 		entity.setCjr(getOperateUser());
 		roleMapper.insertSelective(entity);
 		return ApiResponse.success();
@@ -63,14 +64,15 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 		Example userRoleExample = new Example(SysYhJs.class);
 		userRoleExample.and().andEqualTo(SysYhJs.InnerColumn.yhId.name(), yhid);
 		List<SysYhJs> userRoles = userRoleMapper.selectByExample(userRoleExample);
-		if (userRoles.size() == 0)
+		if (userRoles.size() == 0) {
 			return new ArrayList<>();
+		}
 		return userRoles.stream().map(SysYhJs::getJsId).collect(Collectors.toList());
 	}
 
 	/**
 	 * 由于iview模板功能限制 返回系统所有角色，并把用户拥有的角色 _checked属性标记为true，以便前台修改用户角色
-	 *
+	 * 
 	 * @param yhid
 	 * @return
 	 */
@@ -78,8 +80,9 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 	public List<SysJs> getUserRolesWithChecked(String yhid) {
 		List<SysJs> allRoles = roleMapper.selectAll();
 		List<String> jsIds = getUserRoleIds(yhid);
-		if (jsIds.size() == 0)
+		if (jsIds.size() == 0) {
 			return allRoles;
+		}
 		for (SysJs role : allRoles) {
 			if (jsIds.contains(role.getJsId())) {
 				role.set_checked(true);
@@ -91,8 +94,9 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 	@Override
 	public List<SysJs> getUserRoles(String yhid) {
 		List<String> jsIds = getUserRoleIds(yhid);
-		if (jsIds.size() == 0)
+		if (jsIds.size() == 0) {
 			return new ArrayList<>();
+		}
 		Example roleExample = new Example(SysJs.class);
 		roleExample.and().andIn(SysJs.InnerColumn.jsId.name(), jsIds);
 		return roleMapper.selectByExample(roleExample);
@@ -109,27 +113,42 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 	public ApiResponse<String> modifyUserRoles(String yhid, List<String> jsIds) {
 		// 检查用户是否存在
 		SysYh user = userMapper.selectByPrimaryKey(yhid);
-		if (user == null)
+		if (user == null) {
 			return ApiResponse.fail("用户不存在");
+		}
 
 		// 删除就数据
 		Example userRoleExample = new Example(SysYhJs.class);
 		userRoleExample.and().andEqualTo(SysYhJs.InnerColumn.yhId.name(), yhid);
+		// 排除用户自带角色
+		userRoleExample.and().andNotEqualTo(SysYhJs.InnerColumn.jsId.name(),user.getRoleId());
 		userRoleMapper.deleteByExample(userRoleExample);
 		String createUser = getOperateUser();
+		Date now = new Date();
 
+		if(CollectionUtils.isNotEmpty(jsIds)) {
+			// 插入新数据
+			jsIds.forEach(jsId -> {
+				SysYhJs userRole = new SysYhJs();
+				userRole.setYhjsId(genId());
+				userRole.setJsId(jsId);
+				userRole.setYhId(yhid);
+				userRole.setCjr(createUser);
+				userRole.setCjsj(now);
+				userRoleMapper.insert(userRole);
 
-		// 插入新数据
-		for (String jsId : jsIds) {
+			});
+		}
+		gnService.initPermission();
+		/*for (String jsId : jsIds) {
 			SysYhJs userRole = new SysYhJs();
 			userRole.setYhjsId(genId());
 			userRole.setJsId(jsId);
 			userRole.setYhId(yhid);
 			userRole.setCjr(createUser);
-			userRole.setCjsj(DateUtils.getNowTime());
+			userRole.setCjsj(now);
 			userRoleMapper.insert(userRole);
-		}
-		gnService.updateUserFunctins(user);
+		}*/
 		return ApiResponse.success();
 	}
 
@@ -137,8 +156,9 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 	public ApiResponse<String> modifyRolePermission(String jsId, List<String> bizIds, List<String> gndms) {
 		// 检查角色是否存在
 		SysJs role = roleMapper.selectByPrimaryKey(jsId);
-		if (role == null)
+		if (role == null) {
 			return ApiResponse.fail("角色不存在");
+		}
 
 		// 删除旧数据
 
@@ -162,7 +182,7 @@ public class JsServiceImpl extends BaseServiceImpl<SysJs, String> implements JsS
 		RuntimeCheck.ifBlank(entity.getJsmc(), "请输入角色名称");
 		RuntimeCheck.ifBlank(entity.getJsId(), "请输入角色代码");
 		entity.setXgr(getOperateUser());
-		entity.setXgsj(DateUtils.getNowTime());
+		entity.setXgsj(new Date());
 		update(entity);
 		return  ApiResponse.updateSuccess()  ;
 	}

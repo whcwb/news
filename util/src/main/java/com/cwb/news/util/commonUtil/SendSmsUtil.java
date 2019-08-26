@@ -1,6 +1,8 @@
 package com.cwb.news.util.commonUtil;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.aliyuncs.DefaultAcsClient;
 import com.aliyuncs.IAcsClient;
 import com.aliyuncs.dysmsapi.model.v20170525.QuerySendDetailsRequest;
@@ -10,11 +12,14 @@ import com.aliyuncs.dysmsapi.model.v20170525.SendSmsResponse;
 import com.aliyuncs.exceptions.ClientException;
 import com.aliyuncs.profile.DefaultProfile;
 import com.aliyuncs.profile.IClientProfile;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.collections.map.HashedMap;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * 短信 下发平台
@@ -27,23 +32,24 @@ public class SendSmsUtil {
     static final String domain = "dysmsapi.aliyuncs.com";
 
     // 此处需要替换成开发者自己的AK(在阿里云访问控制台寻找)
-    static final String accessKeyId = "LTAI7vB2rojRUhVp";
-    static final String accessKeySecret = "6tzpToWomgfrjxuuoFxlRUdJdzAI4e";
+    static final String accessKeyId = "LTAIWFNrsTyfGI4U";
+    static final String accessKeySecret = "nrs5RISRKjTDH2QnMg0O7zwhh9JcUR";
 
 
-    public static Boolean sendSms(Map<String,String> requestMap){
-        Boolean ret=false;
+    public static Boolean sendSms(Map<String, String> requestMap) {
+        Boolean ret = false;
         try {
-            SendSmsResponse response= sendSmsMap(requestMap);
-            if(response.getCode() != null && response.getCode().equals("OK")) {
-                ret=true;
+            SendSmsResponse response = sendSmsMap(requestMap);
+            if (response.getCode() != null && response.getCode().equals("OK")) {
+                ret = true;
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return ret;
     }
-    public static SendSmsResponse sendSmsMap(Map<String,String> requestMap) throws ClientException {
+
+    public static SendSmsResponse sendSmsMap(Map<String, String> requestMap) throws ClientException {
 
         //可自助调整超时时间
         System.setProperty("sun.net.client.defaultConnectTimeout", "10000");
@@ -60,7 +66,7 @@ public class SendSmsUtil {
 //        request.setPhoneNumbers("18672922385");
         request.setPhoneNumbers(requestMap.get("phoneNumbers"));//phoneNumbers
         //必填:短信签名-可在短信控制台中找到
-        request.setSignName("吉驾无忧");//阿里云短信测试专用
+        request.setSignName("明涛驾校管理平台");//阿里云短信测试专用
         //必填:短信模板-可在短信控制台中找到
 //        request.setTemplateCode("SMS_136430180");
         request.setTemplateCode(requestMap.get("templateCode"));//templateCode
@@ -79,6 +85,7 @@ public class SendSmsUtil {
 
         return sendSmsResponse;
     }
+
     public static QuerySendDetailsResponse querySendDetails(String bizId) throws ClientException {
 
         //可自助调整超时时间
@@ -110,12 +117,12 @@ public class SendSmsUtil {
         return querySendDetailsResponse;
     }
 
-    public static void main(String[] args) throws ClientException, InterruptedException {
+   /* public static void main(String[] args) throws ClientException, InterruptedException {
 
-        Map<String,String> map=new HashMap<>();
-        map.put("phoneNumbers","18672922385");//电话号码
-        map.put("templateCode","SMS_136430180");//短信模板
-        map.put("templateParam","{\"code\":\"123456\"}");//短信报文
+        Map<String, String> map = new HashMap<>();
+        map.put("phoneNumbers", "18672922385");//电话号码
+        map.put("templateCode", "SMS_147260049");//短信模板
+        map.put("templateParam", "{\"code\":\"123456\"}");//短信报文
 //        map.put("","");
 //        map.put("","");
         //发短信
@@ -129,15 +136,14 @@ public class SendSmsUtil {
         Thread.sleep(3000L);
 
         //查明细
-        if(response.getCode() != null && response.getCode().equals("OK")) {
+        if (response.getCode() != null && response.getCode().equals("OK")) {
             QuerySendDetailsResponse querySendDetailsResponse = querySendDetails(response.getBizId());
             System.out.println("短信明细查询接口返回数据----------------");
             System.out.println("Code=" + querySendDetailsResponse.getCode());
             System.out.println("Message=" + querySendDetailsResponse.getMessage());
             int i = 0;
-            for(QuerySendDetailsResponse.SmsSendDetailDTO smsSendDetailDTO : querySendDetailsResponse.getSmsSendDetailDTOs())
-            {
-                System.out.println("SmsSendDetailDTO["+i+"]:");
+            for (QuerySendDetailsResponse.SmsSendDetailDTO smsSendDetailDTO : querySendDetailsResponse.getSmsSendDetailDTOs()) {
+                System.out.println("SmsSendDetailDTO[" + i + "]:");
                 System.out.println("Content=" + smsSendDetailDTO.getContent());
                 System.out.println("ErrCode=" + smsSendDetailDTO.getErrCode());
                 System.out.println("OutId=" + smsSendDetailDTO.getOutId());
@@ -151,4 +157,92 @@ public class SendSmsUtil {
             System.out.println("RequestId=" + querySendDetailsResponse.getRequestId());
         }
 
-    }}
+    }*/
+
+    public static String sendMSG(String phone, String content)  {
+        String url = "http://cs.kmindo.com:9980";
+        String account = "GoSaku";
+        String password = DigestUtils.md5Hex("GoSaku6057");
+        String loginUrl = url + "/cs/login";
+        Map<String,String> loginParam = new HashMap<>();
+        loginParam.put("account",account);
+        loginParam.put("password",password);
+        String s = HttpUtil.get(loginUrl, loginParam);
+        JSONObject jsonObject = JSON.parseObject(s);
+        String token = (String) jsonObject.getJSONObject("data").get("token");
+
+        String smsUrl = url + "/sm/sender";
+        Map<String,String> postHeader = new HashedMap();
+        postHeader.put("content-type", "application/json");
+
+
+        JSONObject object = new JSONObject();
+        object.put("token",token);
+        object.put("sendType",1);
+        object.put("msisdn",phone);
+        object.put("message",content);
+        String post = "";
+        try {
+             post = HttpUtil.postJson(smsUrl, postHeader,JSON.toJSONString(object));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+
+        return post;
+    }
+
+    public static String sendOtp(String phone){
+        Random random = new Random();
+        String smsCode ="";
+        for(int i = 0 ; i < 6; i++){
+            int nextInt = random.nextInt(9);
+            smsCode += nextInt;
+        }
+        String url = "http://cs.kmindo.com:9980";
+        String account = "GoSaku";
+        String password = DigestUtils.md5Hex("GoSaku6057");
+        String loginUrl = url + "/cs/login";
+        Map<String,String> loginParam = new HashMap<>();
+        loginParam.put("account",account);
+        loginParam.put("password",password);
+        String s = HttpUtil.get(loginUrl, loginParam);
+        JSONObject jsonObject = JSON.parseObject(s);
+        String token = (String) jsonObject.getJSONObject("data").get("token");
+
+        String otpUrl = url + "/sm/otp/send";
+        Map<String,String> postHeader = new HashedMap();
+        postHeader.put("content-type", "application/json");
+
+        JSONObject params = new JSONObject();
+        params.put("token", token);
+        params.put("from","AFT");
+        params.put("to",phone);
+        params.put("message",smsCode + " is your code[Go-Saku]");
+
+        String post = "";
+        try {
+            post = HttpUtil.postJson(otpUrl, postHeader,JSON.toJSONString(params));
+        }catch (Exception e){
+            return "error";
+        }
+
+        JSONObject parseObject = JSON.parseObject(post);
+        int code = (int) parseObject.getJSONObject("result").get("code");
+        if( code == 0) {
+            // 发送成功
+            return smsCode;
+        }else{
+            return "error";
+        }
+
+    }
+
+
+    public static void main(String[] args) {
+        sendOtp("6282121224879");
+    }
+
+
+}

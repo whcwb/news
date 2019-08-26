@@ -5,59 +5,39 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 @Table(name = "SYS_PTFW")
 public class SysFw implements Serializable {
-    /**
-     * 服务id
-     */
     @Id
     @Column(name = "FW_ID")
     private String fwId;
-    /**
-     * 服务名称
-     */
+
     @Column(name = "FWMC")
     private String fwmc;
-    /**
-     * 服务代码
-     */
+
     @Column(name = "FWDM")
     private String fwdm;
-    /**
-     * 创建时间
-     */
+
     @Column(name = "CJSJ")
-    private String cjsj;
-    /**
-     * 创建人
-     */
+    private Date cjsj;
+
     @Column(name = "CJR")
     private String cjr;
-    /**
-     *修改时间
-     */
+
     @Column(name = "XGSJ")
-    private String xgsj;
-    /**
-     *修改人
-     */
+    private Date xgsj;
+
     @Column(name = "XGR")
     private String xgr;
-    /**
-     *状态
-     */
+
     @Column(name = "ZT")
     private String zt;
-    /**
-     *API前缀
-     */
+
     @Column(name = "API_QZ")
     private String apiQz;
-    /**
-     *图标
-     */
+
     @Column(name = "TB")
     private String tb;
 
@@ -119,14 +99,14 @@ public class SysFw implements Serializable {
     /**
      * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
      * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
@@ -147,14 +127,14 @@ public class SysFw implements Serializable {
     /**
      * @return XGSJ
      */
-    public String getXgsj() {
+    public Date getXgsj() {
         return xgsj;
     }
 
     /**
      * @param xgsj
      */
-    public void setXgsj(String xgsj) {
+    public void setXgsj(Date xgsj) {
         this.xgsj = xgsj;
     }
 

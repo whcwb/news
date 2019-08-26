@@ -1,6 +1,6 @@
 package com.cwb.news.util.mapperprovider;
 
-import com.ldz.util.commonUtil.JdbcType2JavaType;
+import com.cwb.news.util.commonUtil.JdbcType2JavaType;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ibatis.mapping.MappedStatement;
 import tk.mybatis.mapper.entity.EntityColumn;

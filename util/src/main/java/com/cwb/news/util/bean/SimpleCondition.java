@@ -2,6 +2,8 @@ package com.cwb.news.util.bean;
 
 import tk.mybatis.mapper.entity.Example;
 
+import java.util.Arrays;
+
 /**
  * @author chenwei
  * @copyright
@@ -12,6 +14,14 @@ public class SimpleCondition extends Example {
 
     public SimpleCondition(Class<?> entityClass) {
         super(entityClass);
+    }
+
+    public void gt(String key, Object val){
+        this.and().andGreaterThan(key,val);
+    }
+
+    public void gt(Enum key, Object val){
+        this.and().andGreaterThan(key.name(),val);
     }
 
     public void gte(String key,Object val){
@@ -26,8 +36,19 @@ public class SimpleCondition extends Example {
     public void lte(Enum key,Object val){
         this.and().andLessThanOrEqualTo(key.name(),val);
     }
+    public void lt(String key, Object val){
+        this.and().andLessThan(key, val);
+    }
+
+    public void lt(Enum key, Object val){
+        this.and().andLessThan(key.name(), val);
+    }
+
     public void in(String key,Iterable val){
         this.and().andIn(key,val);
+    }
+    public void in(Enum key,String... vals){
+        this.and().andIn(key.name(), Arrays.asList(vals));
     }
     public void in(Enum key,Iterable val){
         this.in(key.name(),val);

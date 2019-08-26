@@ -27,7 +27,7 @@ public class FileUtil {
                 targetFile.mkdirs();
             }
 		} catch (Exception e) {
-			//  handle exception
+			// TODO: handle exception
 		}
         
     }
@@ -42,12 +42,13 @@ public class FileUtil {
         	out.flush();
         	out.close();
 		} catch (Exception e) {
-			//  handle exception
+			// TODO: handle exception
 		} 
         //out.write(file);
         //out.flush();
         //out.close();
     }
+
 
     /**
      * 判断指定的文件是否存在。
@@ -221,7 +222,7 @@ public class FileUtil {
             return filename;
         }
     }
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String path = "/Users/yangx/Desktop/ccc.jpg";
         System.out.println(path+"\n结果："+getNamePart(path));
         System.out.println(path+"\n结果："+trimType(path));
@@ -231,6 +232,6 @@ public class FileUtil {
 
 
 
-    }
+    }*/
 
 }

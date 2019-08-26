@@ -24,7 +24,7 @@ import java.util.List;
  * @since 2018/2/6
  */
 @Controller
-@RequestMapping("pub")
+@RequestMapping("api")
 public class ExportCtrl {
 
     /**
@@ -48,6 +48,7 @@ public class ExportCtrl {
         response.setContentType("application/msexcel");
         response.setHeader("pragma", "no-cache");
         response.addHeader("Content-Disposition","attachment; filename="+ params.getFileName());
+        response.setHeader("Access-Control-Allow-Origin", "*");
         OutputStream out = response.getOutputStream();
         ExcelUtil.createSheet(out,"统计",heads,getData(params));
     }

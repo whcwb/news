@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/api/rz")
-public class RzController extends BaseController<SysRz,String>{
+public class RzController extends BaseController<SysRz,String> {
     @Autowired
     private RzService service;
 

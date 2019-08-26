@@ -4,129 +4,95 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Date;
 
-@Table(name = "sys_yh_js")
+@Table(name = "SYS_YH_JS")
 public class SysYhJs implements Serializable {
-    /**
-     * 用户角色关联表id
-     */
     @Id
     @Column(name = "YHJS_ID")
     private String yhjsId;
 
-    /**
-     * 用户id
-     */
     @Column(name = "YH_ID")
     private String yhId;
 
-    /**
-     * 角色id
-     */
     @Column(name = "JS_ID")
     private String jsId;
 
-    /**
-     * 创建人
-     */
     @Column(name = "CJR")
     private String cjr;
 
-    /**
-     * 创建时间
-     */
     @Column(name = "CJSJ")
-    private String cjsj;
+    private Date cjsj;
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 获取用户角色关联表id
-     *
-     * @return YHJS_ID - 用户角色关联表id
+     * @return YHJS_ID
      */
     public String getYhjsId() {
         return yhjsId;
     }
 
     /**
-     * 设置用户角色关联表id
-     *
-     * @param yhjsId 用户角色关联表id
+     * @param yhjsId
      */
     public void setYhjsId(String yhjsId) {
         this.yhjsId = yhjsId;
     }
 
     /**
-     * 获取用户id
-     *
-     * @return YH_ID - 用户id
+     * @return YH_ID
      */
     public String getYhId() {
         return yhId;
     }
 
     /**
-     * 设置用户id
-     *
-     * @param yhId 用户id
+     * @param yhId
      */
     public void setYhId(String yhId) {
         this.yhId = yhId;
     }
 
     /**
-     * 获取角色id
-     *
-     * @return JS_ID - 角色id
+     * @return JS_ID
      */
     public String getJsId() {
         return jsId;
     }
 
     /**
-     * 设置角色id
-     *
-     * @param jsId 角色id
+     * @param jsId
      */
     public void setJsId(String jsId) {
         this.jsId = jsId;
     }
 
     /**
-     * 获取创建人
-     *
-     * @return CJR - 创建人
+     * @return CJR
      */
     public String getCjr() {
         return cjr;
     }
 
     /**
-     * 设置创建人
-     *
-     * @param cjr 创建人
+     * @param cjr
      */
     public void setCjr(String cjr) {
         this.cjr = cjr;
     }
 
     /**
-     * 获取创建时间
-     *
-     * @return CJSJ - 创建时间
+     * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
-     * 设置创建时间
-     *
-     * @param cjsj 创建时间
+     * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 

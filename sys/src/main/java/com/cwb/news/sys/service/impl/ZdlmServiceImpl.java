@@ -10,17 +10,13 @@ import com.cwb.news.sys.service.ZdlmService;
 import com.cwb.news.sys.service.ZdxmService;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
 import com.github.pagehelper.PageInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -61,7 +57,9 @@ public class ZdlmServiceImpl extends BaseServiceImpl<SysZdlm,String> implements 
         Map<String,SysZdlm> zdlmMap = list.stream().collect(Collectors.toMap(SysZdlm::getLmdm,p->p));
         for (SysZdxm zdxm : zdxms) {
             SysZdlm zdlm = zdlmMap.get(zdxm.getZdlmdm());
-            if (zdlm == null)continue;
+            if (zdlm == null) {
+                continue;
+            }
             if (zdlm.getZdxmList() == null){
                 List<SysZdxm> zdxmList = new ArrayList<>();
                 zdxmList.add(zdxm);
@@ -79,7 +77,7 @@ public class ZdlmServiceImpl extends BaseServiceImpl<SysZdlm,String> implements 
 //        RuntimeCheck.ifTrue(ifExists(SysZdlm.InnerColumn.lmdm.getValue(),zdlm.getLmdm()),"类目代码已存在");
 
         zdlm.setCjr(getOperateUser());
-        zdlm.setCjsj(DateUtils.getNowTime());
+        zdlm.setCjsj(new Date());
         zdlmMapper.insertSelective(zdlm);
         return ApiResponse.success();
     }
@@ -104,15 +102,21 @@ public class ZdlmServiceImpl extends BaseServiceImpl<SysZdlm,String> implements 
 
     @Override
     public void setZdxms(List<SysZdlm> zdlmList) {
-        if (zdlmList == null || zdlmList.size() == 0)return;
+        if (zdlmList == null || zdlmList.size() == 0) {
+            return;
+        }
         List<String> lmdms = zdlmList.stream().map(SysZdlm::getLmdm).collect(Collectors.toList());
         List<SysZdxm> zdxms = zdxmService.findIn(SysZdxm.InnerColumn.zdlmdm,lmdms);
-        if (zdxms.size() == 0)return;
+        if (zdxms.size() == 0) {
+            return;
+        }
 
         Map<String,SysZdlm> zdlmMap = zdlmList.stream().collect(Collectors.toMap(SysZdlm::getLmdm,p->p));
         for (SysZdxm zdxm : zdxms) {
             String lmdm = zdxm.getZdlmdm();
-            if (!zdlmMap.containsKey(lmdm))continue;
+            if (!zdlmMap.containsKey(lmdm)) {
+                continue;
+            }
             SysZdlm zdlm = zdlmMap.get(lmdm);
             if (zdlm.getZdxmList() == null){
                 List<SysZdxm> zdxmList = new ArrayList<>();

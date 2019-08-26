@@ -11,10 +11,11 @@ import java.util.List;
  * auther chenwei
  * create at 2018/2/26
  */
-public interface JgService extends BaseService<SysJg,String>{
+public interface JgService extends BaseService<SysJg,String> {
 
     List<SysJg> getOrgTree(List<SysJg> orgList);
     List<SysJg> getOrgTreeByOrgCodes(List<String> orgCodes);
+    List<TreeNode> convertToTreeNodeList(List<SysJg> orgList);
 
 
     /**
@@ -38,9 +39,13 @@ public interface JgService extends BaseService<SysJg,String>{
      * @param orgCode
      * @return
      */
-    List<SysJg> findAllSubOrg(String orgCode,String jgmc);
+    List<SysJg> findAllSubOrg(List<String> orgCode, String jgmc);
 
     ApiResponse<List<SysJg>>  getOrgTree(String jgmc);
 
     ApiResponse<List<TreeNode>> getTree();
+
+    ApiResponse<List<SysJg>> getOrgPath(String orgCode);
+
+    List<SysJg> findSubOrg(String jgdm);
 }

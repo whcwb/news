@@ -5,52 +5,33 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
-@Table(name = "sys_zdlm")
+@Table(name = "SYS_ZDLM")
 public class SysZdlm implements Serializable {
-    /**
-     * 类目代码
-     */
     @Id
     @Column(name = "LMDM")
     private String lmdm;
 
-    /**
-     * 类目名称
-     */
     @Column(name = "LMMC")
     private String lmmc;
 
-    /**
-     * 创建时间
-     */
     @Column(name = "CJSJ")
-    private String cjsj;
+    private Date cjsj;
 
-    /**
-     * 创建人
-     */
     @Column(name = "CJR")
     private String cjr;
 
-    /**
-     * 修改时间
-     */
     @Column(name = "XGSJ")
-    private String xgsj;
+    private Date xgsj;
 
-    /**
-     * 修改人
-     */
     @Column(name = "XGR")
     private String xgr;
 
-    /**
-     * 权重
-     */
     @Column(name = "QZ")
     private Double qz;
+
     @Transient
     private List<SysZdxm> zdxmList;
 
@@ -61,129 +42,102 @@ public class SysZdlm implements Serializable {
     public void setZdxmList(List<SysZdxm> zdxmList) {
         this.zdxmList = zdxmList;
     }
+
     private static final long serialVersionUID = 1L;
 
     /**
-     * 获取类目代码
-     *
-     * @return LMDM - 类目代码
+     * @return LMDM
      */
     public String getLmdm() {
         return lmdm;
     }
 
     /**
-     * 设置类目代码
-     *
-     * @param lmdm 类目代码
+     * @param lmdm
      */
     public void setLmdm(String lmdm) {
         this.lmdm = lmdm;
     }
 
     /**
-     * 获取类目名称
-     *
-     * @return LMMC - 类目名称
+     * @return LMMC
      */
     public String getLmmc() {
         return lmmc;
     }
 
     /**
-     * 设置类目名称
-     *
-     * @param lmmc 类目名称
+     * @param lmmc
      */
     public void setLmmc(String lmmc) {
         this.lmmc = lmmc;
     }
 
     /**
-     * 获取创建时间
-     *
-     * @return CJSJ - 创建时间
+     * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
-     * 设置创建时间
-     *
-     * @param cjsj 创建时间
+     * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
     /**
-     * 获取创建人
-     *
-     * @return CJR - 创建人
+     * @return CJR
      */
     public String getCjr() {
         return cjr;
     }
 
     /**
-     * 设置创建人
-     *
-     * @param cjr 创建人
+     * @param cjr
      */
     public void setCjr(String cjr) {
         this.cjr = cjr;
     }
 
     /**
-     * 获取修改时间
-     *
-     * @return XGSJ - 修改时间
+     * @return XGSJ
      */
-    public String getXgsj() {
+    public Date getXgsj() {
         return xgsj;
     }
 
     /**
-     * 设置修改时间
-     *
-     * @param xgsj 修改时间
+     * @param xgsj
      */
-    public void setXgsj(String xgsj) {
+    public void setXgsj(Date xgsj) {
         this.xgsj = xgsj;
     }
 
     /**
-     * 获取修改人
-     *
-     * @return XGR - 修改人
+     * @return XGR
      */
     public String getXgr() {
         return xgr;
     }
 
     /**
-     * 设置修改人
-     *
-     * @param xgr 修改人
+     * @param xgr
      */
     public void setXgr(String xgr) {
         this.xgr = xgr;
     }
 
     /**
-     * 获取权重
-     *
-     * @return QZ - 权重
+     * @return QZ
      */
     public Double getQz() {
         return qz;
     }
 
     /**
-     * 设置权重
-     *
-     * @param qz 权重
+     * @param qz
      */
     public void setQz(Double qz) {
         this.qz = qz;

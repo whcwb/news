@@ -1,8 +1,7 @@
 package com.cwb.news.util.commonUtil;
 
-import org.apache.commons.lang.StringUtils;
-
 import java.math.BigDecimal;
+import java.util.regex.Pattern;
 
 /**
  * @author chenwei
@@ -44,19 +43,24 @@ public class MathUtil {
         return bd.floatValue();
     }
 
-    /**
-     * 字符串转 double
-     * @param val
-     * @return
-     */
-    public static Double stringToDouble (String val){
-        if(StringUtils.isNotEmpty(StringUtils.trim(val))){
-            return Double.parseDouble(val);
-        }else {
-            return 0.00;
-        }
-//        return retatin(r,num,4);
+   /* public static void main(String[] args) {
+        System.out.println(isNumeric("12a3"));
+    }*/
+    public static boolean isNumeric(String str){
+        Pattern pattern = Pattern.compile("[0-9]*");
+        return pattern.matcher(str).matches();
     }
-
+    /**
+     *  求两个数的最大公约数
+     */
+    public static int getDivisor(int m , int n){
+        int result = 0;
+        while (n != 0) {
+            result = m % n;
+            m = n;
+            n = result;
+        }
+        return m;
+    }
 
 }

@@ -6,6 +6,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 @Table(name = "SYS_FWGN")
@@ -22,53 +23,37 @@ public class SysGn implements Serializable {
     @Column(name = "FWDM")
     @NotNull(message="服务代码不能为空")
     private String fwdm;
-    /**
-     * 创建时间
-     */
+
     @Column(name = "CJSJ")
-    private String cjsj;
-    /**
-     * 创建人
-     */
+    private Date cjsj;
+
     @Column(name = "CJR")
     private String cjr;
 
-    /**
-     * 修改时间
-     */
     @Column(name = "XGSJ")
-    private String xgsj;
+    private Date xgsj;
 
-    /**
-     * 修改人
-     */
     @Column(name = "XGR")
     private String xgr;
 
     @Column(name = "ZT")
     @NotNull(message="功能状态不能为空")
     private String zt;
-    /**
-     * 备注
-     */
+
     @Column(name = "BZ")
     private String bz;
 
     @Column(name = "URL")
     @NotNull(message="URL不能为空")
     private String url;
-    /**
-     * 父节点
-     */
+
     @Column(name = "FJD")
     private String fjd;
 
     @Column(name = "TZDZ")
     @NotNull(message="跳转地址不能为空")
     private String tzdz;
-    /**
-     * 图标
-     */
+
     @Column(name = "TB")
     private String tb;
 
@@ -168,14 +153,14 @@ public class SysGn implements Serializable {
     /**
      * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
      * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
@@ -196,14 +181,14 @@ public class SysGn implements Serializable {
     /**
      * @return XGSJ
      */
-    public String getXgsj() {
+    public Date getXgsj() {
         return xgsj;
     }
 
     /**
      * @param xgsj
      */
-    public void setXgsj(String xgsj) {
+    public void setXgsj(Date xgsj) {
         this.xgsj = xgsj;
     }
 

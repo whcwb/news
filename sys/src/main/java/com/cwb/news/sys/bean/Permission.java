@@ -1,8 +1,10 @@
 package com.cwb.news.sys.bean;
 
-//import com.cwb.news.sys.model.SysBiz;
-//import com.cwb.news.sys.model.SysResource;
 
+import com.cwb.news.sys.model.SysBiz;
+import com.cwb.news.sys.model.SysResource;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -26,31 +28,31 @@ public class Permission {
     private boolean disabledCheckBox;       // 禁掉checkbox
     private boolean checked;                // 是否勾选
     private boolean selected;               // 是否选中子节点
-//
-//    public Permission(SysResource resource) {
-//        this.id = resource.getResId();
-//        this.menuId = this.id.toString();
-//        this.pid = resource.getResPid();
-//        this.level = resource.getResLevel();
-//        this.title = resource.getResName();
-//        this.icon = resource.getResIcon();
-//        this.order = resource.getResOrder();
-//        this.apiPrefix = resource.getApiPrefix();
-//        this.menuUrl = resource.getRouterPrefix() + resource.getResUrl();
-//        this.expand = true;
-//    }
-//
-//    public Permission(SysBiz biz){
-//        this.id = biz.getBizId();
-//        this.menuId = this.id.toString();
-//        this.title = biz.getBizName();
-//        this.parentMenuCode = biz.getBizNo();
-//        this.level = 0;
-//        this.bizNo = biz.getBizNo();
-//        this.children = new ArrayList<>();
-//        this.expand = true;
-////        this.selected = true;
-//    }
+
+    public Permission(SysResource resource) {
+        this.id = resource.getResId();
+        this.menuId = this.id.toString();
+        this.pid = resource.getResPid();
+        this.level = resource.getResLevel();
+        this.title = resource.getResName();
+        this.icon = resource.getResIcon();
+        this.order = resource.getResOrder();
+        this.apiPrefix = resource.getApiPrefix();
+        this.menuUrl = resource.getRouterPrefix() + resource.getResUrl();
+        this.expand = true;
+    }
+
+    public Permission(SysBiz biz){
+        this.id = biz.getBizId();
+        this.menuId = this.id.toString();
+        this.title = biz.getBizName();
+        this.parentMenuCode = biz.getBizNo();
+        this.level = 0;
+        this.bizNo = biz.getBizNo();
+        this.children = new ArrayList<>();
+        this.expand = true;
+//        this.selected = true;
+    }
 
     public Integer getOrder() {
         return order;

@@ -30,6 +30,7 @@ public class FwController extends BaseController<SysFw, String> {
         return bizService.saveEntity(entity);
     }
     
+    @Override
     @RequestMapping(value="/update", method={RequestMethod.POST})
    	public ApiResponse<String> update(SysFw entity){
     	

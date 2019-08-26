@@ -1,4 +1,5 @@
 package com.cwb.news.util.commonUtil;
+
 /**
  * Twitter_Snowflake<br>
  * SnowFlake的结构如下(每部分用-分开):<br>
@@ -73,7 +74,8 @@ public class SnowflakeIdWorker {
         this.datacenterId = datacenterId;
     }
 
-    // ==============================Methods==========================================
+
+// ==============================Methods==========================================
     /**
      * 获得下一个ID (该方法是线程安全的)
      * @return SnowflakeId
@@ -134,12 +136,12 @@ public class SnowflakeIdWorker {
 
     //==============================Test=============================================
     /** 测试 */
-    public static void main(String[] args) {
+   /* public static void main(String[] args) {
         SnowflakeIdWorker idWorker = new SnowflakeIdWorker(0, 1);
         for (int i = 0; i < 1000; i++) {
             long id = idWorker.nextId();
             System.out.println(Long.toBinaryString(id));
             System.out.println(id);
         }
-    }
+    }*/
 }

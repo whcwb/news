@@ -27,4 +27,8 @@ public class UserPassCredential implements Serializable {
 	private String captcha;
 	//验证码前台生成Key
 	private String codeID;
+	// ukey序列号
+	private String ukey;
+	// ukey密码
+	private String ukeyPwd;
 }

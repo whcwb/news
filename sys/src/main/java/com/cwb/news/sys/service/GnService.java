@@ -5,7 +5,6 @@ import com.cwb.news.sys.bean.Menu;
 import com.cwb.news.sys.model.SysFw;
 import com.cwb.news.sys.model.SysGn;
 import com.cwb.news.sys.model.SysYh;
-import com.cwb.news.sys.model.SysYhGn;
 import com.cwb.news.util.bean.ApiResponse;
 
 import java.util.List;
@@ -13,10 +12,9 @@ import java.util.List;
 public interface GnService extends BaseService<SysGn, String> {
     ApiResponse<String> saveEntity(SysGn entity);
 
-    List<SysYhGn> getYhGnList(String yhId);
+    void cachePermission(List<String> ids);
 
-    void updateUserFunctins(String yhdId);
-    void updateUserFunctins(SysYh  user);
+    List<SysGn> buildFunctionTree(List<SysGn> functionList);
 
     /**
      * 查找某个服务的所有功能
@@ -32,7 +30,7 @@ public interface GnService extends BaseService<SysGn, String> {
      * @param functionCode 功能代码
      * @return 执行结果
      */
-    ApiResponse<String> setOrgFunction(String orgCode,List<String> functionCode);
+    ApiResponse<String> setOrgFunction(String orgCode, List<String> functionCode);
 
     /**
      * 查询机构拥有的功能列表
@@ -68,4 +66,10 @@ public interface GnService extends BaseService<SysGn, String> {
     ApiResponse<String> initMenu(List<Menu> menus);
 
     ApiResponse<String> setOrgFunctions(String jgdm, List<String> gndmList);
+    /**
+     * 加载所有角色的权限
+     */
+    void initPermission();
+
+    ApiResponse<String> removeByIds(String[] ids);
 }

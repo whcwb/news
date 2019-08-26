@@ -9,6 +9,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Table(name = "SYS_PTJG")
@@ -20,78 +21,67 @@ public class SysJg implements Serializable {
     @Id
     @Column(name = "JGDM")
     private String jgdm;
-
-    /**
-     * 机构名称fv
-     */
-    @Column(name = "JGMC")
-    private String jgmc;
-
-    /**
-     * 机构类型
-     */
-    @Column(name = "JGLX")
-    private String jglx;
-
-    /**
-     * 状态
-     */
-    @Column(name = "ZT")
-    private String zt;
-
-    /**
-     * 创建时间
-     */
-    @Column(name = "CJSJ")
-    private String cjsj;
-
-    /**
-     * 创建人
-     */
-    @Column(name = "CJR")
-    private String cjr;
-
-    /**
-     * 修改人
-     */
-    @Column(name = "XGR")
-    private String xgr;
-
-    /**
-     * 修改时间
-     */
-    @Column(name = "XGSJ")
-    private String xgsj;
-
-    /**
-     * 管理员
-     */
-    @Column(name = "GLY")
-    private String gly;
-
-    /**
-     * 管理员姓名
-     */
-    @Column(name = "GLYXM")
-    private String glyxm;
-
-    /**
-     * 父机构代码
-     */
-    @Column(name = "FJGDM")
-    private String fjgdm;
-
-    /**
-     * 备注
-     */
-    @Column(name = "BZ")
-    private String bz;
-
     /**
      * 机构等级
      */
     @Column(name = "JGDJ")
     private Integer jgdj;
+
+    @Column(name = "JGMC")
+    private String jgmc;
+
+    @Column(name = "JGLX")
+    private String jglx;
+
+    @Column(name = "ZT")
+    private String zt;
+
+    @Column(name = "CJSJ")
+    private Date cjsj;
+
+    @Column(name = "CJR")
+    private String cjr;
+
+    @Column(name = "XGR")
+    private String xgr;
+
+    @Column(name = "XGSJ")
+    private Date xgsj;
+
+    @Column(name = "GLY")
+    private String gly;
+
+    @Column(name = "GLYXM")
+    private String glyxm;
+
+    @Column(name = "FJGDM")
+    private String fjgdm;
+
+    @Column(name = "BZ")
+    private String bz;
+
+    @Column(name = "SZQY")
+    private String szqy;
+
+    @Column(name = "LXDH1")
+    private String lxdh1;
+
+    @Column(name = "LXDH2")
+    private String lxdh2;
+    @Column(name = "LX")
+    private String lx;
+    @Column(name = "PX")
+    private Integer px;
+
+    @Transient
+    private String fjgmc;
+
+   /* @Column( name = "JGBM")
+    private String jgbm;*/
+
+   /* @Column(name = "JGSM")
+    private String jgsm;
+*/
 
 
     @Transient
@@ -99,10 +89,66 @@ public class SysJg implements Serializable {
     @Transient
     private String title;
 
+    /*public String getJgbm() {
+        return jgbm;
+    }
+
+    public void setJgbm(String jgbm) {
+        this.jgbm = jgbm;
+    }*/
+
+    /*public String getJgsm() {
+        return jgsm;
+    }
+
+    public void setJgsm(String jgsm) {
+        this.jgsm = jgsm;
+    }*/
+
+
+    public String getSzqy() {
+        return szqy;
+    }
+
+    public void setSzqy(String szqy) {
+        this.szqy = szqy;
+    }
+
+    public String getLxdh1() {
+        return lxdh1;
+    }
+
+    public void setLxdh1(String lxdh1) {
+        this.lxdh1 = lxdh1;
+    }
+
+    public String getLxdh2() {
+        return lxdh2;
+    }
+
+    public void setLxdh2(String lxdh2) {
+        this.lxdh2 = lxdh2;
+    }
+
+    public String getFjgmc() {
+        return fjgmc;
+    }
+
+    public void setFjgmc(String fjgmc) {
+        this.fjgmc = fjgmc;
+    }
+
     public String getTitle() {
         return jgmc;
     }
-    
+
+    public Integer getJgdj() {
+        return jgdj;
+    }
+
+    public void setJgdj(Integer jgdj) {
+        this.jgdj = jgdj;
+    }
 
     public List<SysJg> getChildren() {
         return children == null ? new ArrayList<>() : children;
@@ -119,241 +165,192 @@ public class SysJg implements Serializable {
     }
 
     /**
-     * 获取机构代码
-     *
-     * @return JGDM - 机构代码
+     * @return JGDM
      */
     public String getJgdm() {
         return jgdm;
     }
 
     /**
-     * 设置机构代码
-     *
-     * @param jgdm 机构代码
+     * @param jgdm
      */
     public void setJgdm(String jgdm) {
         this.jgdm = jgdm;
     }
 
     /**
-     * 获取机构名称
-     *
-     * @return JGMC - 机构名称
+     * @return JGMC
      */
     public String getJgmc() {
         return jgmc;
     }
 
     /**
-     * 设置机构名称
-     *
-     * @param jgmc 机构名称
+     * @param jgmc
      */
     public void setJgmc(String jgmc) {
         this.jgmc = jgmc;
     }
 
     /**
-     * 获取机构类型
-     *
-     * @return JGLX - 机构类型
+     * @return JGLX
      */
     public String getJglx() {
         return jglx;
     }
 
     /**
-     * 设置机构类型
-     *
-     * @param jglx 机构类型
+     * @param jglx
      */
     public void setJglx(String jglx) {
         this.jglx = jglx;
     }
 
     /**
-     * 获取状态
-     *
-     * @return ZT - 状态
+     * @return ZT
      */
     public String getZt() {
         return zt;
     }
 
     /**
-     * 设置状态
-     *
-     * @param zt 状态
+     * @param zt
      */
     public void setZt(String zt) {
         this.zt = zt;
     }
 
     /**
-     * 获取创建时间
-     *
-     * @return CJSJ - 创建时间
+     * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
-     * 设置创建时间
-     *
-     * @param cjsj 创建时间
+     * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
     /**
-     * 获取创建人
-     *
-     * @return CJR - 创建人
+     * @return CJR
      */
     public String getCjr() {
         return cjr;
     }
 
     /**
-     * 设置创建人
-     *
-     * @param cjr 创建人
+     * @param cjr
      */
     public void setCjr(String cjr) {
         this.cjr = cjr;
     }
 
     /**
-     * 获取修改人
-     *
-     * @return XGR - 修改人
+     * @return XGR
      */
     public String getXgr() {
         return xgr;
     }
 
     /**
-     * 设置修改人
-     *
-     * @param xgr 修改人
+     * @param xgr
      */
     public void setXgr(String xgr) {
         this.xgr = xgr;
     }
 
     /**
-     * 获取修改时间
-     *
-     * @return XGSJ - 修改时间
+     * @return XGSJ
      */
-    public String getXgsj() {
+    public Date getXgsj() {
         return xgsj;
     }
 
     /**
-     * 设置修改时间
-     *
-     * @param xgsj 修改时间
+     * @param xgsj
      */
-    public void setXgsj(String xgsj) {
+    public void setXgsj(Date xgsj) {
         this.xgsj = xgsj;
     }
 
     /**
-     * 获取管理员
-     *
-     * @return GLY - 管理员
+     * @return GLY
      */
     public String getGly() {
         return gly;
     }
 
     /**
-     * 设置管理员
-     *
-     * @param gly 管理员
+     * @param gly
      */
     public void setGly(String gly) {
         this.gly = gly;
     }
 
     /**
-     * 获取管理员姓名
-     *
-     * @return GLYXM - 管理员姓名
+     * @return GLYXM
      */
     public String getGlyxm() {
         return glyxm;
     }
 
     /**
-     * 设置管理员姓名
-     *
-     * @param glyxm 管理员姓名
+     * @param glyxm
      */
     public void setGlyxm(String glyxm) {
         this.glyxm = glyxm;
     }
 
     /**
-     * 获取父机构代码
-     *
-     * @return FJGDM - 父机构代码
+     * @return FJGDM
      */
     public String getFjgdm() {
         return fjgdm;
     }
 
     /**
-     * 设置父机构代码
-     *
-     * @param fjgdm 父机构代码
+     * @param fjgdm
      */
     public void setFjgdm(String fjgdm) {
         this.fjgdm = fjgdm;
     }
 
     /**
-     * 获取备注
-     *
-     * @return BZ - 备注
+     * @return BZ
      */
     public String getBz() {
         return bz;
     }
 
     /**
-     * 设置备注
-     *
-     * @param bz 备注
+     * @param bz
      */
     public void setBz(String bz) {
         this.bz = bz;
     }
 
-    /**
-     * 获取机构等级
-     *
-     * @return JGDJ - 机构等级
-     */
-    public Integer getJgdj() {
-        return jgdj;
+    public String getLx() {
+        return lx;
     }
 
-    /**
-     * 设置机构等级
-     *
-     * @param jgdj 机构等级
-     */
-    public void setJgdj(Integer jgdj) {
-        this.jgdj = jgdj;
+    public void setLx(String lx) {
+        this.lx = lx;
+    }
+
+    public Integer getPx() {
+        return px;
+    }
+
+    public void setPx(Integer px) {
+        this.px = px;
     }
 
     public enum InnerColumn {
         jgdm("JGDM"),
+        jgdj("JGDJ"),
         jgmc("JGMC"),
         jglx("JGLX"),
         zt("ZT"),
@@ -365,7 +362,13 @@ public class SysJg implements Serializable {
         glyxm("GLYXM"),
         fjgdm("FJGDM"),
         bz("BZ"),
-        jgdj("JGDJ");
+        szqy("SZQY"),
+        lxdn1("LXDH1"),
+        lxdh2("LXDH2"),
+        lx("LX"),
+        px("PX")
+        /*jgbm("JGBM"),*/
+        /*jgsm("JGSM")*/;
 
         private final String column;
 

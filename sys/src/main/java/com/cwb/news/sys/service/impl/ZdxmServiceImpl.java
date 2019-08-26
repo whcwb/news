@@ -8,13 +8,13 @@ import com.cwb.news.sys.model.SysZdxm;
 import com.cwb.news.sys.service.ZdxmService;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.bean.SimpleCondition;
-import com.cwb.news.util.commonUtil.DateUtils;
 import com.cwb.news.util.exception.RuntimeCheck;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.common.Mapper;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,7 +36,6 @@ public class ZdxmServiceImpl extends BaseServiceImpl<SysZdxm,String> implements 
     public List<SysZdxm> findByTypeCode(String typeCode) {
         SimpleCondition condition = new SimpleCondition(SysZdxm.class);
         condition.eq(SysZdxm.InnerColumn.zdlmdm,typeCode);
-        condition.setOrderByClause( SysZdxm.InnerColumn.qz.asc());
         return zdxmMapper.selectByExample(condition);
     }
 
@@ -47,6 +46,7 @@ public class ZdxmServiceImpl extends BaseServiceImpl<SysZdxm,String> implements 
         }
         SimpleCondition condition = new SimpleCondition(SysZdxm.class);
         condition.in(SysZdxm.InnerColumn.zdlmdm,zdlms);
+        condition.setOrderByClause("qz desc");
         return zdxmMapper.selectByExample(condition);
     }
 
@@ -65,7 +65,7 @@ public class ZdxmServiceImpl extends BaseServiceImpl<SysZdxm,String> implements 
         RuntimeCheck.ifTrue(count != 0,"字典代码已存在");
 
         zdxm.setCjr(getOperateUser());
-        zdxm.setCjsj(DateUtils.getNowTime());
+        zdxm.setCjsj(new Date());
         zdxm.setZdId(genId());
         zdxmMapper.insertSelective(zdxm);
         return ApiResponse.success();

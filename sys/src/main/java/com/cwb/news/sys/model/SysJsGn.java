@@ -4,175 +4,127 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.util.Date;
 
-@Table(name = "sys_js_gn")
+@Table(name = "SYS_JS_GN")
 public class SysJsGn implements Serializable {
-    /**
-     * id
-     */
     @Id
     @Column(name = "ID")
     private String id;
 
-    /**
-     * 角色代码
-     */
     @Column(name = "JSDM")
     private String jsdm;
 
-    /**
-     * 功能代码
-     */
     @Column(name = "GNDM")
     private String gndm;
 
-    /**
-     * 创建时间
-     */
     @Column(name = "CJSJ")
-    private String cjsj;
+    private Date cjsj;
 
-    /**
-     * 创建人
-     */
     @Column(name = "CJR")
     private String cjr;
 
-    /**
-     * 服务代码
-     */
     @Column(name = "FWDM")
     private String fwdm;
 
-    /**
-     * 父功能代码
-     */
     @Column(name = "FGNDM")
     private String fgndm;
 
     private static final long serialVersionUID = 1L;
 
     /**
-     * 获取id
-     *
-     * @return ID - id
+     * @return ID
      */
     public String getId() {
         return id;
     }
 
     /**
-     * 设置id
-     *
-     * @param id id
+     * @param id
      */
     public void setId(String id) {
         this.id = id;
     }
 
     /**
-     * 获取角色代码
-     *
-     * @return JSDM - 角色代码
+     * @return JSDM
      */
     public String getJsdm() {
         return jsdm;
     }
 
     /**
-     * 设置角色代码
-     *
-     * @param jsdm 角色代码
+     * @param jsdm
      */
     public void setJsdm(String jsdm) {
         this.jsdm = jsdm;
     }
 
     /**
-     * 获取功能代码
-     *
-     * @return GNDM - 功能代码
+     * @return GNDM
      */
     public String getGndm() {
         return gndm;
     }
 
     /**
-     * 设置功能代码
-     *
-     * @param gndm 功能代码
+     * @param gndm
      */
     public void setGndm(String gndm) {
         this.gndm = gndm;
     }
 
     /**
-     * 获取创建时间
-     *
-     * @return CJSJ - 创建时间
+     * @return CJSJ
      */
-    public String getCjsj() {
+    public Date getCjsj() {
         return cjsj;
     }
 
     /**
-     * 设置创建时间
-     *
-     * @param cjsj 创建时间
+     * @param cjsj
      */
-    public void setCjsj(String cjsj) {
+    public void setCjsj(Date cjsj) {
         this.cjsj = cjsj;
     }
 
     /**
-     * 获取创建人
-     *
-     * @return CJR - 创建人
+     * @return CJR
      */
     public String getCjr() {
         return cjr;
     }
 
     /**
-     * 设置创建人
-     *
-     * @param cjr 创建人
+     * @param cjr
      */
     public void setCjr(String cjr) {
         this.cjr = cjr;
     }
 
     /**
-     * 获取服务代码
-     *
-     * @return FWDM - 服务代码
+     * @return FWDM
      */
     public String getFwdm() {
         return fwdm;
     }
 
     /**
-     * 设置服务代码
-     *
-     * @param fwdm 服务代码
+     * @param fwdm
      */
     public void setFwdm(String fwdm) {
         this.fwdm = fwdm;
     }
 
     /**
-     * 获取父功能代码
-     *
-     * @return FGNDM - 父功能代码
+     * @return FGNDM
      */
     public String getFgndm() {
         return fgndm;
     }
 
     /**
-     * 设置父功能代码
-     *
-     * @param fgndm 父功能代码
+     * @param fgndm
      */
     public void setFgndm(String fgndm) {
         this.fgndm = fgndm;

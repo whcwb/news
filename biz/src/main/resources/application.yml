@@ -1,12 +1,12 @@
 spring:
   profiles:
-    active: test  #ºÏ²¢ application-test.yml ÖĞµÄÅäÖÃ²ÎÊı
-  #ÉÏ´«ÎÄ¼şÉèÖÃ
+    active: test  #åˆå¹¶ application-test.yml ä¸­çš„é…ç½®å‚æ•°
+  #ä¸Šä¼ æ–‡ä»¶è®¾ç½®
   http:
     multipart:
       max-file-size: 100Mb
       max-request-size: 100Mb
-      #Ïß³Ì³ØÅäÖÃĞÅÏ¢
+      #çº¿ç¨‹æ± é…ç½®ä¿¡æ¯
   thread:
     pool:
       corePoolSize: 10
@@ -18,7 +18,7 @@ server:
   port: 8080
 
 
-#mybatisÅäÖÃĞÅÏ¢
+#mybatisé…ç½®ä¿¡æ¯
 mybatis:
   configLocation: classpath:mybatis/MapperConfig.xml
   mapperLocations: classpath:mybatis/sql/*.xml,classpath:mybatis/sql/extend/*.xml

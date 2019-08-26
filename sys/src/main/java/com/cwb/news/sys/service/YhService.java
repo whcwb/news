@@ -1,21 +1,17 @@
 package com.cwb.news.sys.service;
 
 import com.cwb.news.sys.base.BaseService;
-import com.cwb.news.sys.model.SysFw;
 import com.cwb.news.sys.model.SysYh;
 import com.cwb.news.util.bean.ApiResponse;
 
-import java.util.List;
-
 public interface YhService extends BaseService<SysYh, String> {
 
-	List<SysYh> getByRoleIds(List<String> roleIds);
 	/**
 	 * 新增用户
 	 * @param user 用户
 	 * @return 执行结果
 	 */
-	ApiResponse<String> addUser(SysYh user);
+//	ApiResponse<String> addUser(SysYh user);
 
 	ApiResponse<String> saveEntity(SysYh entity);
 
@@ -28,8 +24,6 @@ public interface YhService extends BaseService<SysYh, String> {
 	 */
 	ApiResponse<String> mdfPwd(String userId, String oldPwd, String newPwd);
 
-	ApiResponse<List<SysFw>> getUserPermissions(SysYh user);
-
     ApiResponse<String> updateEntity(SysYh user);
 
     ApiResponse<String> updateSession(SysYh user);
@@ -40,4 +34,19 @@ public interface YhService extends BaseService<SysYh, String> {
 	 * @return
 	 */
 	ApiResponse<String> resetPassword(String userId);
+
+	/**
+	 * 通过手机号查询用户
+	 * @param phone
+	 * @return
+	 */
+	SysYh queryByPhone(String phone);
+
+    ApiResponse<String> bindUKey(SysYh user);
+
+    ApiResponse<String> unBindUKey(SysYh user);
+
+	ApiResponse<String> updateLoginType(SysYh user);
+
+    ApiResponse<String> initUserRole();
 }

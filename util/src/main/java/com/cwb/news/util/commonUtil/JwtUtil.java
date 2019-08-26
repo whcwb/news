@@ -8,8 +8,6 @@ import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
@@ -18,7 +16,7 @@ import java.util.Map;
  * Created by chenwei on 2017/9/18
  */
 public class JwtUtil {
-    private static Logger logger = LogManager.getLogger(JwtUtil.class);
+   
 
     private static Algorithm algorithm;
     private static JWTVerifier verifier;
@@ -58,7 +56,22 @@ public class JwtUtil {
                     .withAudience("wcpms")
                     .withClaim("userId",userId)
                     .withClaim("loginName",loginName)
-                    .withClaim("timeStamp",System.currentTimeMillis())
+                    .sign(algorithm);
+            return token;
+        } catch (JWTCreationException exception){
+            //UTF-8 encoding not supported
+        }
+        return null;
+    }
+    public static String createToken(String userId,String loginName,String userrole){
+        try {
+            String token = JWT.create()
+                    .withIssuer("wcpms")
+                    .withSubject("wcpms")
+                    .withAudience("wcpms")
+                    .withClaim("userId",userId)
+                    .withClaim("loginName",loginName)
+                    .withClaim("userRole",userrole)
                     .sign(algorithm);
             return token;
         } catch (JWTCreationException exception){
@@ -114,7 +127,7 @@ public class JwtUtil {
         return jwt.getClaim(key).asString();
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String t = create();
         System.out.println(t);
         t+="aa";
@@ -124,5 +137,5 @@ public class JwtUtil {
             System.out.println("val="+entry.getValue().asInt());
         }
         System.out.println(jwt.getClaim("age").asInt());
-    }
+    }*/
 }

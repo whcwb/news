@@ -7,11 +7,12 @@ import com.cwb.news.sys.model.SysJg;
 import com.cwb.news.sys.model.SysYh;
 import com.cwb.news.sys.service.JgService;
 import com.cwb.news.util.bean.ApiResponse;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,34 @@ public class JgController extends BaseController<SysJg, String> {
 	@Override
 	protected BaseService<SysJg, String> getBaseService() {
 		return jgService;
+	}
+
+	@RequestMapping("getCurrentUserOrgTree")
+	public ApiResponse<List<SysJg>> getCurrentUserOrgTree(){
+		SysYh currentUser = getCurrentUser();
+		String jgdms = currentUser.getJgdms();
+		List<String> list = new ArrayList<>();
+		list.add(currentUser.getJgdm());
+		if(StringUtils.isNotBlank(jgdms)){
+			 list.addAll( Arrays.asList(jgdms.split(",")));
+		}
+		List<SysJg> orgList =  jgService.findAllSubOrg(list,null);
+		List<SysJg> orgTree = jgService.getOrgTree(orgList);
+		return ApiResponse.success(orgTree);
+	}
+	@RequestMapping("getCurrentOrgTree")
+	public ApiResponse<List<TreeNode>> getCurrentOrgTree(){
+		SysYh currentUser = getCurrentUser();
+		String jgdms = currentUser.getJgdms();
+		List<String> list = new ArrayList<>();
+		list.add(currentUser.getJgdm());
+		if(StringUtils.isNotBlank(jgdms)){
+			list.addAll(Arrays.asList(jgdms.split(",")));
+		}
+		List<SysJg> orgList =  jgService.findAllSubOrg(list,null);
+		List<TreeNode> orgNode = jgService.convertToTreeNodeList(orgList);
+		List<TreeNode> orgTree = TreeNode.buildTree(orgNode);
+		return ApiResponse.success(orgTree);
 	}
 
 	@RequestMapping("add")
@@ -40,6 +69,12 @@ public class JgController extends BaseController<SysJg, String> {
 		return jgService.getTree();
 	}
 
+
+	@GetMapping("getOrgPath")
+	public ApiResponse<List<SysJg>> getOrgPath(@RequestParam(value = "orgCode",required = false) String orgCode){
+		return jgService.getOrgPath(orgCode);
+	}
+
 	@Override
 	@RequestMapping(value = "/save", method = { RequestMethod.POST })
 	public ApiResponse<String> save(SysJg jg) {
@@ -49,8 +84,26 @@ public class JgController extends BaseController<SysJg, String> {
 	@RequestMapping("getSubOrgList")
 	public ApiResponse<List<SysJg>> getSubOrgList(String jgmc){
 		SysYh user = getCurrentUser();
-		List<SysJg> orgList = jgService.findAllSubOrg(user.getJgdm(),jgmc);
+		String jgdms = user.getJgdms();
+		List<String> list = new ArrayList<>();
+		list.add(user.getJgdm());
+		if(StringUtils.isNotBlank(jgdms)){
+			list.addAll( Arrays.asList(jgdms.split(",")));
+		}
+		List<SysJg> orgList = jgService.findAllSubOrg(list,jgmc);
 		return ApiResponse.success(orgList);
+	}
+
+	@PostMapping("/getSubOrg")
+	public ApiResponse<SysJg> getSubOrg(@RequestParam(required = false) String jgdm){
+		if(StringUtils.isBlank(jgdm)){
+			SysYh sysYh = getCurrentUser();
+			jgdm = sysYh.getJgdm();
+		}
+		SysJg byOrgCode = jgService.findByOrgCode(jgdm);
+		List<SysJg> orgList = jgService.findSubOrg(jgdm);
+		byOrgCode.setChildren(orgList);
+		return ApiResponse.success(byOrgCode);
 	}
 
 }

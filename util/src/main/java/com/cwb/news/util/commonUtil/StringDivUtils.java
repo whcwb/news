@@ -37,11 +37,11 @@ public class StringDivUtils {
         return buffer.toString();
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         for (int j = 0; j < 1000; j++) {
             System.out.println(getSix());
         }
-    }
+    }*/
     /**
      * 判断手机号是否合格
      *
@@ -50,7 +50,7 @@ public class StringDivUtils {
      */
     public static boolean isPhoneValid(String phonenumber) {
         try {
-            if (org.apache.commons.lang.StringUtils.isBlank(phonenumber)) {
+            if (StringUtils.isBlank(phonenumber)) {
                 return false;
             }
             if (!phonenumber.matches("^((13[0-9])|(15[0-9])|(17[0-9])|(18[0-9]))\\d{8}$")) {

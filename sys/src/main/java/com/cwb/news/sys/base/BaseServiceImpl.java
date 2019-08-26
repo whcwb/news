@@ -46,37 +46,41 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
     //排序关键字
     public final static String ORDERBYNAME = "orderBy";
 
-    protected Class <T> entityClass;
+    protected Class<T> entityClass;
 
     /**
      * 生成id方法
+     *
      * @return
      */
-    public String genId(){
+    public String genId() {
         long id = idGenerator.nextId();
         return String.valueOf(id);
     }
 
     protected Class<?> getEntityCls() {
-        if (entityClass == null){
-            entityClass = (Class <T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        if (entityClass == null) {
+            entityClass = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         }
         return entityClass;
     }
 
-    public List<T> query(T t){
+    @Override
+    public List<T> query(T t) {
         LimitedCondition condition = getQueryCondition();
-        if (!fillQueryCondition(condition)){
+        if (!fillQueryCondition(condition)) {
             return new ArrayList<>();
         }
         List<T> list = findByCondition(condition);
         afterQuery(list);
         return list;
     }
-    public ApiResponse<List<T>> pager(Page<T> pager){
+
+    @Override
+    public ApiResponse<List<T>> pager(Page<T> pager) {
         ApiResponse<List<T>> result = new ApiResponse<>();
         LimitedCondition condition = getQueryCondition();
-        if (!fillPagerCondition(condition)){
+        if (!fillPagerCondition(condition)) {
             return new ApiResponse<List<T>>().emptyPage();
         }
 
@@ -86,29 +90,49 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
         return result;
     }
 
-    protected void afterPager(PageInfo<T> resultPage){
+    protected void afterPager(PageInfo<T> resultPage) {
         return;
     }
-    protected void afterQuery(List<T> list){
+
+    protected void afterQuery(List<T> list) {
         return;
     }
 
     /**
      * 查询条件补充
+     *
      * @param condition
      * @return
      */
-    public boolean fillCondition(LimitedCondition condition){
+    @Override
+    public boolean fillCondition(LimitedCondition condition) {
         return fillPagerCondition(condition);
     }
-    public boolean fillPagerCondition(LimitedCondition condition){
+
+    public boolean fillPagerCondition(LimitedCondition condition) {
         return true;
     }
-    public boolean fillQueryCondition(LimitedCondition condition){
+
+    public boolean fillQueryCondition(LimitedCondition condition) {
         return true;
     }
 
     protected abstract Mapper<T> getBaseMapper();
+
+    public Object getRequestParamter(String key) {
+        HttpServletRequest request = getRequset();
+        return request.getParameter(key);
+    }
+
+    public String getRequestParamterAsString(String key) {
+        HttpServletRequest request = getRequset();
+        return request.getParameter(key);
+    }
+
+    public HttpServletRequest getRequset() {
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        return request;
+    }
 
     /**
      * 根据前台传值封装条件查询对象Example，属性名必须要和查询bean对象中的属性名要一致。
@@ -128,13 +152,23 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
      * InRange:范围搜索（大于等于和小于等于搜索）。前台传值格式为：大于等于值,小于等于值。中间使用逗号分隔，实现范围搜索
      * IsNull:等于NULL
      * IsNotNull:不等于NULL
+     *
      * @return
      */
+    @Override
     public LimitedCondition getQueryCondition() {
         LimitedCondition condition = new LimitedCondition(getEntityCls());
         //从请求中获取到所有参数名称，对参数名称进行解析，将符合搜索条件的参数取出来，参与到查询条件中
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpServletRequest request = getRequset();
         Enumeration<String> params = request.getParameterNames();
+        String[] tableColumns = request.getParameterValues("tableColumns");
+        if (tableColumns != null && tableColumns.length != 0){
+            try{
+                condition.selectProperties(tableColumns);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
         Pattern pattern = Pattern.compile("(In$)|(Like$)|(Endwith$)|(Startwith$)|(Gte$)|(Lte$)|(InRange$)|(IsNull$)|(IsNotNull$)");
         //排序关键字
         String orderBy = request.getParameter(ORDERBYNAME);
@@ -183,17 +217,25 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
                                 condition.lte(fieldName, value);
                             }
                         } else if ("InRange".equals(optType)) {
-                            if (StringUtils.isNotBlank(value.replaceAll(",","").trim())){
+                            if (StringUtils.isNotBlank(value.replaceAll(",", "").trim())) {
                                 String[] arrs = value.split(",");
                                 if (existField.getType().isInstance(new Date())) {
-                                    condition.gte(fieldName, DateUtils.getDate(arrs[0], "yyyy-MM-dd"));
+                                    if(StringUtils.length(arrs[0]) <= 10){
+                                        condition.gte(fieldName, DateUtils.getDate(arrs[0], "yyyy-MM-dd"));
+                                    }else{
+                                        condition.gte(fieldName, DateUtils.getDate(arrs[0], "yyyy-MM-dd HH:mm:ss"));
+                                    }
                                 } else {
                                     condition.gte(fieldName, arrs[0]);
                                 }
 
                                 if (arrs.length == 2) {
                                     if (existField.getType().isInstance(new Date())) {
-                                        condition.lte(fieldName, DateUtils.getDate(arrs[1], "yyyy-MM-dd"));
+                                        if(StringUtils.length(arrs[0]) <= 10){
+                                            condition.gte(fieldName, DateUtils.getDate(arrs[1], "yyyy-MM-dd"));
+                                        }else{
+                                            condition.gte(fieldName, DateUtils.getDate(arrs[1], "yyyy-MM-dd HH:mm:ss"));
+                                        }
                                     } else {
                                         condition.lte(fieldName, arrs[1]);
                                     }
@@ -277,27 +319,34 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
     }
 
 
+    @Override
     public List<List<String>> getSheetData(ExcelParams params) {
         LimitedCondition example = getQueryCondition();
-        fillPagerCondition(example);
+        fillCondition(example);
         List<T> list = findByCondition(example);
-        return getSheetData(list,params);
+        return getSheetData(list, params);
     }
+
     /**
      * 根据查询数据生成导出所需数据，如果字段没有声明映射方式，则直接输出 toString 的值
      * 如果有自定义映射方式，则使用自定义映射值
      *
      * @return
      */
+    @Override
     public List<List<String>> getSheetData(List<T> list, ExcelParams params) {
         List<List<String>> data = new ArrayList<>(list.size());
-        if (list.size() == 0) return data;
+        if (list.size() == 0) {
+            return data;
+        }
         String[] keysArray = params.getKeys();
         Map<String, Field> fieldMap = new HashMap<>();
         try {
             for (String s : keysArray) {
                 Field field = list.get(0).getClass().getDeclaredField(s);
-                if (field == null) continue;
+                if (field == null) {
+                    continue;
+                }
                 field.setAccessible(true);
                 fieldMap.put(s, field);
             }
@@ -328,22 +377,24 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
     }
 
 
-
-
     public static SysYh getCurrentUser() {
         return getCurrentUser(true);
     }
+
     public static SysYh getCurrentUser(boolean require) {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         SysYh userInfo = (SysYh) request.getAttribute("userInfo");
-        RuntimeCheck.ifTrue(require && userInfo == null,"当前登录用户未空！");
+        RuntimeCheck.ifTrue(require && userInfo == null, "当前登录用户未空！");
         return userInfo;
     }
+
     public static String getOperateUser() {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         SysYh userInfo = (SysYh) request.getAttribute("userInfo");
-        if (userInfo == null)return null;
-        return userInfo.getYhid()+"-"+userInfo.getXm();
+        if (userInfo == null) {
+            return null;
+        }
+        return userInfo.getYhid() + "-" + userInfo.getXm();
     }
 
     @Override
@@ -388,6 +439,7 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
 
     @Override
     public ApiResponse<String> validAndSave(T entity) {
+
         getBaseMapper().insertSelective(entity);
         return ApiResponse.success();
     }
@@ -428,20 +480,23 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
 
     @Override
     public PageInfo<T> findPage(Page page, Example condition) {
-        if (page.getPageSize() == 0){
+        if (page.getPageSize() == 0) {
             page.setPageSize(8);
         }
-        if (page.getPageNum() == 0){
+        if (page.getPageNum() == 0) {
             page.setPageNum(1);
         }
-        if (StringUtils.isEmpty(condition.getOrderByClause())){
+        if (StringUtils.isEmpty(condition.getOrderByClause())) {
             log.debug("该分页没有设置排序字段，默认按创建时间倒序，如果有其他需求，请在 fillCondition 方法中申明");
             condition.setOrderByClause("cjsj desc");
         }
         PageInfo<T> resultPage = PageHelper.startPage(page.getPageNum(), page.getPageSize()).doSelectPageInfo(new ISelect() {
             @Override
             public void doSelect() {
+
                 getBaseMapper().selectByExample(condition);
+
+
             }
         });
 
@@ -523,7 +578,7 @@ public abstract class BaseServiceImpl<T, PK extends Serializable> implements Bas
 
     @Override
     public boolean ifExists(String key, String val) {
-        int count = countEq(key,val);
+        int count = countEq(key, val);
         return count != 0;
     }
 

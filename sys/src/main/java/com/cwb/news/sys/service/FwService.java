@@ -16,7 +16,7 @@ public interface FwService extends BaseService<SysFw, String> {
      * @param serviceCodes 服务代码
      * @return 执行结果
      */
-    ApiResponse<String> setOrgService(String orgCode,List<String> serviceCodes);
+    ApiResponse<String> setOrgService(String orgCode, List<String> serviceCodes);
 
     /**
      * 查询机构拥有的功能列表
@@ -25,5 +25,5 @@ public interface FwService extends BaseService<SysFw, String> {
      */
     List<SysFw> findByJgdm(String jgdm);
 
-//    ApiResponse<String> removeIdsWithCheck(String[] ids);
+    ApiResponse<String> removeIdsWithCheck(String[] ids);
 }

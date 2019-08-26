@@ -11,13 +11,13 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  *
  */
 @SuppressWarnings("unchecked")
-public class RedisTemplateUtil extends RedisTemplate<Object, Object>{
+public class RedisTemplateUtil extends RedisTemplate<Object, Object> {
 	
 	/**
 	 * 将Key序列化都保持一致，防止Key模式不对，造成过期时间设置无效和key引用操作失败
 	 */
 	public RedisTemplateUtil() {
-		StringRedisSerializer stringSerializer = new StringRedisSerializer();  
+		StringRedisSerializer stringSerializer = new StringRedisSerializer();
 		//Jackson2JsonRedisSerializer<Object> jsonSerializer = new Jackson2JsonRedisSerializer<Object>(Object.class);
 		JdkSerializationRedisSerializer jdkSerializer = new JdkSerializationRedisSerializer();
 		setKeySerializer(stringSerializer);
@@ -45,5 +45,8 @@ public class RedisTemplateUtil extends RedisTemplate<Object, Object>{
 	
 	public <T>T getSerializerHashValue(String hash, String key, Class<T> cls){
 		return (T)this.boundHashOps(hash).get(key);
+	}
+	public Object getSerializerHashValue(String hash, String key){
+		return this.boundHashOps(hash).get(key);
 	}
 }
