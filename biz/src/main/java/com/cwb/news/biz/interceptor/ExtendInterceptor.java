@@ -19,7 +19,8 @@ public class ExtendInterceptor extends BaseWebConfigure {
 				.addPathPatterns("/api/**")
 				.excludePathPatterns("/pub/**"
 						,"/login"
-						,"/upload");
+						,"/upload"
+						,"/file/**");
 		super.addInterceptors(registry);
 	}
 	

@@ -26,6 +26,11 @@ public class News {
      */
     @Column(name = "title")
     private String title;
+    /**
+     * 新闻副标题
+     */
+    @Column(name = "sub_title")
+    private String subTitle;
 
     /**
      * 新闻内容
@@ -53,6 +58,7 @@ public class News {
         cjsj("CJSJ"),
         cjr("CJR"),
         title("TITLE"),
+        subTitle("SUB_TITLE"),
         content("CONTENT"),
         type("TYPE"),
         bz("BZ"),
