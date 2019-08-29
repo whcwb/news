@@ -31,5 +31,9 @@ public class BannerControl extends BaseController<Banner,String> {
         return service.validAndSave(entity);
     }
 
+    @PostMapping("/updateSort")
+    public ApiResponse<String> updateSort(String id, int px){
+        return service.updateSort(id,px);
+    }
 
 }

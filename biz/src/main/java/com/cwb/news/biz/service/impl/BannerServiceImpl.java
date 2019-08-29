@@ -43,4 +43,14 @@ public class BannerServiceImpl extends BaseServiceImpl<Banner, String> implement
 
 	}
 
+	@Override
+	public ApiResponse<String> updateSort(String id, int px) {
+		RuntimeCheck.ifBlank(id,"请选择banner");
+		Banner banner = findById(id);
+		// 更新当前banner及往后的所有banner
+
+
+
+		return null;
+	}
 }
