@@ -4,6 +4,7 @@ import com.cwb.news.biz.mapper.BannerMapper;
 import com.cwb.news.biz.model.Banner;
 import com.cwb.news.biz.service.BannerService;
 import com.cwb.news.sys.base.BaseServiceImpl;
+import com.cwb.news.sys.base.LimitedCondition;
 import com.cwb.news.sys.model.SysYh;
 import com.cwb.news.util.bean.ApiResponse;
 import com.cwb.news.util.exception.RuntimeCheck;
@@ -40,7 +41,11 @@ public class BannerServiceImpl extends BaseServiceImpl<Banner, String> implement
 		entity.setId(genId());
 		save(entity);
 		return ApiResponse.saveSuccess();
+	}
 
+	public boolean fillPagerCondition(LimitedCondition condition){
+		condition.setOrderByClause(" ban_sort asc , cjsj desc ");
+		return true;
 	}
 
 	@Override
@@ -48,9 +53,6 @@ public class BannerServiceImpl extends BaseServiceImpl<Banner, String> implement
 		RuntimeCheck.ifBlank(id,"请选择banner");
 		Banner banner = findById(id);
 		// 更新当前banner及往后的所有banner
-
-
-
 		return null;
 	}
 }

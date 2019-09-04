@@ -13,7 +13,13 @@ import java.util.Set;
 
 public interface AblumMapper extends Mapper<Ablum> {
 
-    @Select(" select * from biz_ablum_img where ab_id in (select max(id) from biz_ablum_img where ab_id in #{ids} group by ab_id ) ")
+    @Select(" <script>select * from biz_ablum_img where ab_id in (select max(id) from biz_ablum_img " +
+            "where ab_id in " +
+            "<foreach collection='ids' index='index' item='item' " +
+            "            open='(' separator=',' close=')'>" +
+            "#{item} " +
+            "</foreach>" +
+            " group by ab_id ) </script>")
     List<AblumImg> latestImg(@Param("ids") Set<String> ids);
 
     @Delete(" delete from biz_ablum_img where ab_id = #{id}")

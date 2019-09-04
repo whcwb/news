@@ -40,18 +40,17 @@ public class AblumServiceImpl extends BaseServiceImpl<Ablum, String> implements 
 		}
 		Set<String> collect = list.stream().map(Ablum::getId).collect(Collectors.toSet());
 		// 取相册中的最近的一张照片
-		List<AblumImg> ablumImgs = baseMapper.latestImg(collect);
-		Map<String, AblumImg> imgMap = ablumImgs.stream().collect(Collectors.toMap(AblumImg::getAbId, p -> p));
-		list.forEach(ablum -> ablum.setAblumImg(imgMap.get(ablum.getId())));
+		if(CollectionUtils.isNotEmpty(collect)){
+			List<AblumImg> ablumImgs = baseMapper.latestImg(collect);
+			Map<String, AblumImg> imgMap = ablumImgs.stream().collect(Collectors.toMap(AblumImg::getAbId, p -> p));
+			list.forEach(ablum -> ablum.setAblumImg(imgMap.get(ablum.getId())));
+		}
 	}
 
 	@Override
 	public ApiResponse<String> validAndSave(Ablum entity){
-
 		SysYh user = getCurrentUser();
-
 		RuntimeCheck.ifBlank(entity.getAbName(), "相册名称不能为空");
-
 		entity.setId(genId());
 		entity.setCjr(user.getXm());
 		entity.setCjsj(DateTime.now().toString("yyyy-MM-dd HH:mm:ss"));

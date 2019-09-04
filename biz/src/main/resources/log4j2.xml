@@ -141,7 +141,7 @@
         </logger>
         <!-- 日志实例(info),其中'service-log'继承root,但是root将日志输出控制台,而'service-log'将日志输出到文件,通过属性'additivity="false"'将'service-log'的
              的日志不再输出到控制台  -->
-        <logger name="com.cwb.news.biz" level="info" includeLocation="false" additivity="false">
+        <logger name="com.cwb.news.biz" level="debug" includeLocation="false" additivity="false">
             <appender-ref ref="debug_appender"/>
             <appender-ref ref="Console"/>
             <appender-ref ref="STDOUT"/>
