@@ -39,7 +39,7 @@ public class AccessInterceptor extends HandlerInterceptorAdapter {
 	private StringRedisTemplate redisDao;
 
 	// 只要登录的用户都能访问
-	private List<String> whiteList = Arrays.asList("/api/traineeinformation/pager","/api/jg/getOrgPath","/api/gn/getPermissionTreeWithChecked","/api/gn/getRolePermissionTree","/api/jg/getCurrentOrgTree","/api/gn/getMenuTree","/api/jg/pager","/api/zd/pager","/api/jg/getTree","/api/gn/getMenuTree","/api/jg/pager","/api/jg/getOrgTree","/api/jg/getOrgTree","/api/clsbyxsjjl/history","/api/clsbyxsjjl/history","/api/jg/getCurrentUserOrgTree","/api/yh/mdfPwd","/api/traineeinformation/exportTestCharge");
+	private List<String> whiteList = Arrays.asList("/api/jg/getOrgPath","/api/gn/getPermissionTreeWithChecked","/api/gn/getRolePermissionTree","/api/jg/getCurrentOrgTree","/api/gn/getMenuTree","/api/jg/pager","/api/zd/pager","/api/jg/getTree","/api/gn/getMenuTree","/api/jg/pager","/api/jg/getOrgTree","/api/jg/getOrgTree","/api/clsbyxsjjl/history","/api/clsbyxsjjl/history","/api/jg/getCurrentUserOrgTree","/api/yh/mdfPwd","/api/traineeinformation/exportTestCharge");
 
 	public AccessInterceptor() {
 	}
@@ -67,7 +67,10 @@ public class AccessInterceptor extends HandlerInterceptorAdapter {
 			// 如果收到的是跨域预请求消息，直接响应，返回true，以便后续跨域请求成功
 			return true;
 		}
-
+		String pc = request.getHeader("PC");
+		if(StringUtils.isNotBlank(pc)){
+			return true;
+		}
 		// 测试代码
 		// 访问权限值
 		// String userid = "1";

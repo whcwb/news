@@ -48,18 +48,22 @@ public class SysOperateLogAop {
         try {
             result = joinPoint.proceed();
         } finally {
-            long endTime = System.currentTimeMillis();
-            int elapseTime = (int) (endTime - startTime);
-            HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-            SysYh userInfo = (SysYh)request.getAttribute("userInfo");
-            log.setFf(joinPoint.getTarget().getClass().getSimpleName() +"." + joinPoint.getSignature().getName());
-            log.setCzsj(new Date());
-            log.setCzr(userInfo.getYhid()+"-"+userInfo.getXm());
-            log.setZxsj(elapseTime);
-            log.setCs(getArgsAsString(joinPoint));
-            log.setRzId(""+idGenerator.nextId());
-            log.setJg(JsonUtil.toJson(result));
-            logMapper.insert(log);
+            try {
+                long endTime = System.currentTimeMillis();
+                int elapseTime = (int) (endTime - startTime);
+                HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+                SysYh userInfo = (SysYh) request.getAttribute("userInfo");
+                log.setFf(joinPoint.getTarget().getClass().getSimpleName() + "." + joinPoint.getSignature().getName());
+                log.setCzsj(new Date());
+                log.setCzr(userInfo.getYhid() + "-" + userInfo.getXm());
+                log.setZxsj(elapseTime);
+                log.setCs(getArgsAsString(joinPoint));
+                log.setRzId("" + idGenerator.nextId());
+                log.setJg(JsonUtil.toJson(result));
+                logMapper.insert(log);
+            }catch(Exception ignored){
+
+            }
         }
         return result;
     }
