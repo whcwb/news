@@ -2,6 +2,7 @@ package com.cwb.news.biz.model;
 
 import lombok.Data;
 
+import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
@@ -23,6 +24,9 @@ public class Gl {
 
     private String cjr;
 
+    @Column(name = "read_num")
+    private Integer read;
+
     public enum InnerColumn{
         id("ID"),
         type("TYPE"),
@@ -30,7 +34,9 @@ public class Gl {
         img("IMG"),
         content("CONTENT"),
         cjsj("CJSJ"),
-        cjr("CJR");
+        cjr("CJR"),
+        read("READ_NUM");
+
         public  final String column;
 
         InnerColumn(String column) {

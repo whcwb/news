@@ -5,45 +5,30 @@ import lombok.Data;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-@Table(name = "BIZ_JD")
 @Data
-public class Jd {
+@Table(name = "BIZ_IMG")
+public class Img {
 
     @Id
     private String id;
 
-    private String title;
+    private String type;
 
-    private String img;
-
-    private String content;
+    private String path;
 
     private String cjsj;
 
     private String cjr;
 
-    private String text;
+    public enum  InnerColumn{
 
-    private String kfsj;
-
-    private String type;
-
-    private String address;
-
-    private String phone;
-
-    public enum InnerColumn{
         id("ID"),
-        title("TITLE"),
-        img("IMG"),
-        content("CONTENT"),
-        cjsj("CJSJ"),
-        cjr("CJR"),
         type("TYPE"),
-        address("ADDRESS"),
-        phone("PHONE");
+        path("PATH"),
+        cjsj("CJSJ"),
+        cjr("CJR");
 
-        private final String column;
+        public final String column;
 
         InnerColumn(String column) {
             this.column = column;
@@ -52,24 +37,17 @@ public class Jd {
             return this.column;
         }
         public String getValue(){
-            return  this.column;
+            return this.column;
         }
         public String asc(){
-            return  this.column  + " asc";
+            return this.column + " asc";
         }
         public String desc(){
             return this.column + " desc";
         }
 
 
-
-
-
-
     }
-
-
-
 
 
 }
