@@ -32,6 +32,8 @@ public class Jd {
 
     private String phone;
 
+    private String photo;
+
     public enum InnerColumn{
         id("ID"),
         title("TITLE"),
@@ -41,7 +43,8 @@ public class Jd {
         cjr("CJR"),
         type("TYPE"),
         address("ADDRESS"),
-        phone("PHONE");
+        phone("PHONE"),
+        photo("PHOTO");
 
         private final String column;
 
