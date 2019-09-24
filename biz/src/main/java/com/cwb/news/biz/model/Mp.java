@@ -3,12 +3,14 @@ package com.cwb.news.biz.model;
 import lombok.Data;
 
 import javax.persistence.Column;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Table(name = "BIZ_MP")
 @Data
 public class Mp {
 
+    @Id
     private String id;
 
     private String img;
