@@ -27,6 +27,9 @@ public class Gl {
     @Column(name = "read_num")
     private Integer read;
 
+    @Column(name = "SUB_TITLE")
+    private String subTitle;
+
     public enum InnerColumn{
         id("ID"),
         type("TYPE"),
@@ -35,7 +38,8 @@ public class Gl {
         content("CONTENT"),
         cjsj("CJSJ"),
         cjr("CJR"),
-        read("READ_NUM");
+        read("READ_NUM"),
+        subTitle("SUB_TITLE");
 
         public  final String column;
 

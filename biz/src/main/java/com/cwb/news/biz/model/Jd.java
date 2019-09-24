@@ -34,6 +34,8 @@ public class Jd {
 
     private String photo;
 
+    private String booking;
+
     public enum InnerColumn{
         id("ID"),
         title("TITLE"),
