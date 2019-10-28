@@ -1,0 +1,57 @@
+.login-bg{
+  position: absolute;
+  width: 500px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  background-image: url('../../assets/images/login_bg.png');
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+}
+.login {
+  width: 100%;
+  height: 100%;
+  //background-image: url('../../assets/images/login_bg.png');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  &-con {
+    //background-image: url('../../assets/images/login_bg.png');
+    //background-repeat: no-repeat;
+    //background-size: 500px;
+    position: absolute;
+    //right: 160px;
+    //left: 50%;
+    top: 50%;
+    //transform: translate(-50%,-50%);
+    width: 50%;
+    &-header {
+      font-size: 16px;
+      font-weight: 300;
+      text-align: center;
+      padding: 30px 0;
+    }
+    .form-con {
+      padding: 10px 0 0;
+      width: 80% !important;
+    }
+    .login-tip {
+      font-size: 10px;
+      text-align: center;
+      color: #c3c3c3;
+    }
+  }
+  .copyRight {
+    text-align: center;
+    width: 100%;
+    position: absolute;
+    bottom:0;
+    font-size: 22px;
+    font-weight: 600;
+    padding: 22px;
+    .messItem{
+      line-height: 35px;
+    }
+  }
+}
