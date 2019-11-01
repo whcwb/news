@@ -120,7 +120,7 @@
     <div class="row" style="margin: 30px 0 0 0;">
       <div class="col-md-1"></div>
       <div class="col-md-10" style="position: relative">
-        <img src='../assets/img/index/z9.png' style="width: 100%"/>
+        <!--<img src='../assets/img/index/z9.png' style="width: 100%"/>-->
         <div class="row"
              style="top: 28px;padding: 0 15px;right: 17px;display: flex;justify-content: space-around;width: 50%;height: 120px;position: absolute;">
           <div class="col-md-3">

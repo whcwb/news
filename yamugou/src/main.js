@@ -14,6 +14,7 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 
 import 'iview/dist/styles/iview.css';
 
+
 import VueI18n from 'vue-i18n'
 import BootstrapVue from 'bootstrap-vue'
 Vue.use(VueI18n)
@@ -27,6 +28,12 @@ Vue.prototype.$http = http;
 import {Card,Modal} from 'iview';
 Vue.component('Card', Card);
 Vue.component('Modal', Modal);
+
+import 'fullpage.js/vendors/scrolloverflow' // Optional. When using scrollOverflow:true
+import VueFullPage from 'vue-fullpage.js'
+
+Vue.use(VueFullPage);
+
 
 
 const i18n = new VueI18n({

@@ -15,7 +15,7 @@ export default new Router({
     {
       path: '/',
       name: 'index',
-      component: () => import('@/pages/index')
+      component: () => import('@/pages/index3.0')
     },
     {
       path: 'Detail',

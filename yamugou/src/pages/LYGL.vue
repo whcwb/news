@@ -33,7 +33,7 @@
       <!--</div>-->
 
 
-      <div class="row" style="height: 1252px;margin: 100px 0 0 0;">
+      <div class="row" style="height: 1300px;margin: 100px 0 0 0;">
         <div class="col-md-1 d-none d-sm-block"></div>
         <div class="col-md-10">
           <div class="row jd" style="height: 670px;margin: 0 0 66px 0;">
@@ -251,6 +251,7 @@
           })
           return
         }
+
 
         this.$router.push({
           name: 'LYGL_Sec',

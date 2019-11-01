@@ -27,7 +27,7 @@
             </div>
           </div>
 
-          <div class="row de" v-html="item.content" style="margin-top: 120px;font-size:20px;color:rgba(51,51,51,1);">
+          <div class="row de" v-html="item.content" style="margin-bottom: 80px;margin-top: 120px;font-size:20px;color:rgba(51,51,51,1);">
             {{item.content}}
           </div>
         </div>

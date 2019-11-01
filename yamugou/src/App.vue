@@ -187,7 +187,7 @@
       $b.css('top','98%')
       $b.css('border','none')
       $b.css('borderRadius', '6px 0 6px 6px')
-      $b.css('boxShadow', '-3px 6px 7px #707070')
+      $b.css('boxShadow', '0 6px 7px #707070')
     }, function () {
       var $b = $($(this).children("ul")[0])
       // var $c = $($b.prev().children("span")[0])

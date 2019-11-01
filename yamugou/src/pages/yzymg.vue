@@ -129,6 +129,7 @@
         })
       },
       toPage(pathName, item) {
+        $('body,html').animate({scrollTop: 0}, 500);
         this.$router.push({
           name: pathName,
           params: {
