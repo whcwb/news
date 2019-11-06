@@ -4,8 +4,11 @@
 // let imgUrl='http://192.168.123.69:9092' //banner图前缀
 // let ajaxUrl ='http://192.168.123.69:8081';//宋
 
-let ajaxUrl='http://119.23.242.234:9084'  //这两个是线上地址
-let imgUrl= 'http://119.23.242.234:9092'
+// let ajaxUrl='http://119.23.242.234:9084'  //这两个是线上地址
+// let imgUrl= 'http://119.23.242.234:9092'
+
+let ajaxUrl='http://39.108.66.37:8080/api'  //这两个是正式地址
+let imgUrl= 'http://39.108.66.37:8080/api'
 export default {
   NETWORK_ERR_STR: '网络加载异常!',
   // url:'http://192.168.3.234:10010',

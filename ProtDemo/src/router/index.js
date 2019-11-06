@@ -8,7 +8,7 @@ import AF from '../libs/comFun'
 Vue.use(Router)
 const router = new Router({
   routes,
-  mode: 'history'
+  mode: 'history',
 })
 const LOGIN_PAGE_NAME = 'login'
 
